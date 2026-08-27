@@ -7,6 +7,29 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+def giris_kontrol():
+    if st.session_state.get("giris_yapildi", False):
+        return
+
+    st.title("🔐 VakıfBank ATM Karar Destek Sistemi")
+    st.caption("Devam etmek için giriş yapın.")
+
+    kullanici = st.text_input("Kullanıcı adı")
+    sifre = st.text_input("Şifre", type="password")
+
+    if st.button("Giriş Yap"):
+        if (
+            kullanici == st.secrets["login"]["username"]
+            and sifre == st.secrets["login"]["password"]
+        ):
+            st.session_state["giris_yapildi"] = True
+            st.rerun()
+        else:
+            st.error("Kullanıcı adı veya şifre hatalı.")
+
+    st.stop()
+
+giris_kontrol()
 
 # Streamlit'in kendi üst/alt boşluklarını gizle.
 st.markdown("""
