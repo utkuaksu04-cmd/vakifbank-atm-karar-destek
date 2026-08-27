@@ -19,8 +19,8 @@ def giris_kontrol():
 
     if st.button("Giriş Yap"):
         if (
-            kullanici == st.secrets["login"]["username"]
-            and sifre == st.secrets["login"]["password"]
+            kullanici == st.secrets["username"]
+            and sifre == st.secrets["password"]
         ):
             st.session_state["giris_yapildi"] = True
             st.rerun()
