@@ -2,6 +2,7 @@
 import math
 from datetime import date, timedelta
 from textwrap import dedent
+from html import escape
 
 import numpy as np
 import pandas as pd
@@ -369,17 +370,44 @@ st.markdown(
         padding:13px 14px;
         min-height:102px;
         overflow:hidden;
+        color:#ffffff !important;
     }
 
-    div[data-testid="stMetricLabel"] {
-        color:#9eb0c0;
-        font-size:.70rem;
+    /* TÜM SAYFALARDA METRIC KÜÇÜK BAŞLIKLARI */
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] > div,
+    div[data-testid="stMetricLabel"] p,
+    div[data-testid="stMetricLabel"] span,
+    div[data-testid="stMetricLabel"] label,
+    div[data-testid="stMetricLabel"] * {
+        color:#FFD54A !important;
+        -webkit-text-fill-color:#FFD54A !important;
+        opacity:1 !important;
+        visibility:visible !important;
+        font-size:.72rem !important;
+        font-weight:850 !important;
+        filter:none !important;
     }
 
-    div[data-testid="stMetricValue"] {
-        color:#fff;
-        font-weight:900;
+    /* METRIC ANA DEĞERLERİ */
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] > div,
+    div[data-testid="stMetricValue"] p,
+    div[data-testid="stMetricValue"] span,
+    div[data-testid="stMetricValue"] * {
+        color:#FFFFFF !important;
+        -webkit-text-fill-color:#FFFFFF !important;
+        opacity:1 !important;
+        visibility:visible !important;
+        font-weight:900 !important;
         font-size:1.55rem;
+        filter:none !important;
+    }
+
+    div[data-testid="stMetricDelta"],
+    div[data-testid="stMetricDelta"] * {
+        opacity:1 !important;
+        visibility:visible !important;
     }
 
     /* Titles in panels */
@@ -436,8 +464,11 @@ st.markdown(
     .kpi-icon.cyan { color:#80edef;background:rgba(50,197,199,.16); }
 
     .kpi-label {
-        color:#c6d1db;
+        color:#FFD54A !important;
+        -webkit-text-fill-color:#FFD54A !important;
+        opacity:1 !important;
         font-size:.72rem;
+        font-weight:800;
         margin-bottom:5px;
     }
 
@@ -555,10 +586,116 @@ st.markdown(
             grid-template-columns:1fr 1fr;
         }
     }
+
+    /* =====================================================
+       FINAL METRIC COLOR OVERRIDE
+       ATM İzleme / Talep Tahmini / Kritik Önceliklendirme /
+       Nakit Optimizasyonu / Raporlar ve diğer st.metric alanları
+       ===================================================== */
+    [data-testid="stMetric"] [data-testid="stMetricLabel"],
+    [data-testid="stMetric"] [data-testid="stMetricLabel"] *,
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricLabel"] * {
+        color:#FFD54A !important;
+        -webkit-text-fill-color:#FFD54A !important;
+        opacity:1 !important;
+        visibility:visible !important;
+        font-weight:850 !important;
+        filter:none !important;
+    }
+
+    [data-testid="stMetric"] [data-testid="stMetricValue"],
+    [data-testid="stMetric"] [data-testid="stMetricValue"] *,
+    [data-testid="stMetricValue"],
+    [data-testid="stMetricValue"] * {
+        color:#FFFFFF !important;
+        -webkit-text-fill-color:#FFFFFF !important;
+        opacity:1 !important;
+        visibility:visible !important;
+        filter:none !important;
+    }
+
+
+    /* =====================================================
+       ÖZEL METRIC KARTLARI — RENK GARANTİLİ
+       Küçük başlık: sarı | Değer: beyaz
+       ===================================================== */
+    .vb-metric-card {
+        background:linear-gradient(180deg,#102230 0%,#0e1b28 100%);
+        border:1px solid #263b4d;
+        border-radius:13px;
+        padding:13px 14px;
+        min-height:102px;
+        margin-bottom:12px;
+        overflow:hidden;
+        box-sizing:border-box;
+    }
+
+    .vb-metric-label {
+        color:#FFD54A !important;
+        -webkit-text-fill-color:#FFD54A !important;
+        opacity:1 !important;
+        font-size:.72rem;
+        font-weight:850;
+        line-height:1.25;
+        margin-bottom:7px;
+    }
+
+    .vb-metric-value {
+        color:#FFFFFF !important;
+        -webkit-text-fill-color:#FFFFFF !important;
+        opacity:1 !important;
+        font-size:1.55rem;
+        font-weight:900;
+        line-height:1.05;
+        letter-spacing:-.35px;
+        overflow-wrap:anywhere;
+    }
+
+    .vb-metric-delta {
+        color:#AFC0CF !important;
+        -webkit-text-fill-color:#AFC0CF !important;
+        opacity:1 !important;
+        font-size:.68rem;
+        font-weight:700;
+        margin-top:7px;
+        line-height:1.25;
+        overflow-wrap:anywhere;
+    }
+
     </style>
     """),
     unsafe_allow_html=True,
 )
+
+
+
+
+# =========================================================
+# ÖZEL METRIC KARTI
+# Streamlit'in tema/DOM değişikliklerinden etkilenmez.
+# =========================================================
+
+def metric_card(container, label, value, delta=None, *args, **kwargs):
+    label_text = escape(str(label))
+    value_text = escape(str(value))
+
+    delta_html = ""
+    if delta is not None and str(delta) != "":
+        delta_html = (
+            f'<div class="vb-metric-delta">{escape(str(delta))}</div>'
+        )
+
+    container.markdown(
+        f"""
+        <div class="vb-metric-card">
+            <div class="vb-metric-label">{label_text}</div>
+            <div class="vb-metric-value">{value_text}</div>
+            {delta_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # =========================================================
@@ -1472,8 +1609,8 @@ elif page == "ATM İzleme":
 
     m1, m2, m3, m4 = st.columns(4)
 
-    m1.metric("İzlenen ATM", len(monitor_df))
-    m2.metric(
+    metric_card(m1, "İzlenen ATM", len(monitor_df))
+    metric_card(m2, 
         "Kritik Durum",
         len(monitor_df[monitor_df["Kritiklik"] == "Yüksek"]),
     )
@@ -1487,7 +1624,7 @@ elif page == "ATM İzleme":
     else:
         avg_fill = 0
 
-    m3.metric("Ortalama Doluluk", f"%{avg_fill:.0f}")
+    metric_card(m3, "Ortalama Doluluk", f"%{avg_fill:.0f}")
 
     refill_today = len(
         monitor_df[
@@ -1495,7 +1632,7 @@ elif page == "ATM İzleme":
             < monitor_df["24s Tahmin"] * .70
         ]
     )
-    m4.metric("Bugün İkmal", refill_today)
+    metric_card(m4, "Bugün İkmal", refill_today)
 
     st.write("")
 
@@ -1542,14 +1679,14 @@ elif page == "ATM İzleme":
 
                 a, b = st.columns(2)
 
-                a.metric("Mevcut Nakit", fmt_tl(row["Mevcut Nakit"]))
-                b.metric("24s Tahmin", fmt_tl(row["24s Tahmin"]))
+                metric_card(a, "Mevcut Nakit", fmt_tl(row["Mevcut Nakit"]))
+                metric_card(b, "24s Tahmin", fmt_tl(row["24s Tahmin"]))
 
-                a.metric("Doluluk Oranı", f"%{util:.0f}")
-                b.metric("Kritiklik", row["Kritiklik"])
+                metric_card(a, "Doluluk Oranı", f"%{util:.0f}")
+                metric_card(b, "Kritiklik", row["Kritiklik"])
 
-                a.metric("Önerilen İkmal", fmt_tl(recommended))
-                b.metric(
+                metric_card(a, "Önerilen İkmal", fmt_tl(recommended))
+                metric_card(b, 
                     "Sonraki Kontrol",
                     "12:00" if row["Kritiklik"] == "Yüksek" else "16:00",
                 )
@@ -1817,10 +1954,10 @@ elif page == "Talep Tahmini":
 
     a, b, c, d = st.columns(4)
 
-    a.metric("Toplam Tahmin", fmt_m(total_forecast))
-    b.metric("Günlük Ortalama", fmt_m(avg_forecast))
-    c.metric("Pik Gün", labels[peak_index], fmt_m(peak_value))
-    d.metric(
+    metric_card(a, "Toplam Tahmin", fmt_m(total_forecast))
+    metric_card(b, "Günlük Ortalama", fmt_m(avg_forecast))
+    metric_card(c, "Pik Gün", labels[peak_index], fmt_m(peak_value))
+    metric_card(d, 
         "Tahmin Değişkenliği",
         f"%{cv:.1f}".replace(".", ","),
     )
@@ -1905,9 +2042,9 @@ elif page == "Talep Tahmini":
                     "Talep değişkenliği kontrol altında. Standart güvenlik stoğu yeterli."
                 )
 
-            st.metric("Senaryo", fc_scenario)
-            st.metric("Tahmin Alt Bandı", fmt_m(min(lower)))
-            st.metric("Tahmin Üst Bandı", fmt_m(max(upper)))
+            metric_card(st, "Senaryo", fc_scenario)
+            metric_card(st, "Tahmin Alt Bandı", fmt_m(min(lower)))
+            metric_card(st, "Tahmin Üst Bandı", fmt_m(max(upper)))
 
 
     # -----------------------------------------------------
@@ -2097,14 +2234,14 @@ elif page == "Kritik Önceliklendirme":
 
     k1, k2, k3, k4 = st.columns(4)
 
-    k1.metric(
+    metric_card(k1, 
         "1. Öncelik",
         top["ATM Kodu"],
         f"{top['İl']} / {top['İlçe']}",
     )
-    k2.metric("Acil İkmal", urgent)
-    k3.metric("Ortalama Risk Skoru", f"{avg_score:.0f}")
-    k4.metric("İzleme Gereken", watch)
+    metric_card(k2, "Acil İkmal", urgent)
+    metric_card(k3, "Ortalama Risk Skoru", f"{avg_score:.0f}")
+    metric_card(k4, "İzleme Gereken", watch)
 
     critical_df["Önerilen Aksiyon"] = critical_df["Risk Skoru"].apply(
         lambda x: (
@@ -2399,27 +2536,27 @@ elif page == "Nakit Optimizasyonu":
         with st.container(border=True):
             st.subheader("Önerilen Nakit Seviyesi")
 
-            st.metric(
+            metric_card(st, 
                 "Optimum Hedef Nakit",
                 fmt_tl(target_cash),
             )
 
             a, b = st.columns(2)
 
-            a.metric(
+            metric_card(a, 
                 "Mevcut Nakit",
                 fmt_tl(row["Mevcut Nakit"]),
             )
-            b.metric(
+            metric_card(b, 
                 "Önerilen İkmal",
                 fmt_tl(refill_amount),
             )
 
-            a.metric(
+            metric_card(a, 
                 "İkmal Öncesi Risk",
                 f"%{risk_before:.0f}",
             )
-            b.metric(
+            metric_card(b, 
                 "İkmal Sonrası Risk",
                 f"%{risk_after:.0f}",
             )
@@ -2436,22 +2573,22 @@ elif page == "Nakit Optimizasyonu":
         with st.container(border=True):
             st.subheader("Maliyet Dengesi")
 
-            st.metric(
+            metric_card(st, 
                 "Beklenen Taşıma Maliyeti",
                 fmt_tl(holding_cost),
             )
 
-            st.metric(
+            metric_card(st, 
                 "Beklenen Stokout Maliyeti",
                 fmt_tl(stockout_cost),
             )
 
-            st.metric(
+            metric_card(st, 
                 "İkmal Operasyon Maliyeti",
                 fmt_tl(operation_cost),
             )
 
-            st.metric(
+            metric_card(st, 
                 "Toplam Tahmini Maliyet",
                 fmt_tl(total_cost),
             )
@@ -2728,22 +2865,22 @@ elif page == "Rota Planlama":
 
                 a, b = st.columns(2)
 
-                a.metric(
+                metric_card(a, 
                     "Kuş Uçuşu",
                     f"{air_distance:.1f} km".replace(".", ","),
                 )
 
-                b.metric(
+                metric_card(b, 
                     "Tahmini Yol",
                     f"{road_distance:.1f} km".replace(".", ","),
                 )
 
-                a.metric(
+                metric_card(a, 
                     "Tahmini Süre",
                     f"{travel_minutes:.0f} dk",
                 )
 
-                b.metric(
+                metric_card(b, 
                     "Tahmini Maliyet",
                     fmt_tl(route_cost),
                 )
@@ -2939,15 +3076,15 @@ elif page == "Rota Planlama":
                     )
 
                 with route_seq_cols[1]:
-                    st.metric(
+                    metric_card(st, 
                         "Önerilen Tur Uzunluğu",
                         f"{cumulative_km:.1f} km".replace(".", ","),
                     )
-                    st.metric(
+                    metric_card(st, 
                         "Yaklaşık Tur Süresi",
                         f"{(cumulative_km / 48 * 60 + 12 * len(sequence_df)):.0f} dk",
                     )
-                    st.metric(
+                    metric_card(st, 
                         "Yaklaşık Tur Maliyeti",
                         fmt_tl(cumulative_km * 32 + 850),
                     )
@@ -3184,19 +3321,19 @@ elif page == "Senaryolar":
         portfolio = pd.DataFrame(portfolio_rows)
 
         p1, p2, p3, p4 = st.columns(4)
-        p1.metric(
+        metric_card(p1, 
             "Toplam Araç",
             int(portfolio["Araç"].sum()),
         )
-        p2.metric(
+        metric_card(p2, 
             "Toplam Mesafe",
             f"{int(portfolio['Mesafe km'].sum())} km",
         )
-        p3.metric(
+        metric_card(p3, 
             "Toplam Maliyet",
             fmt_tl(portfolio["Maliyet"].sum()),
         )
-        p4.metric(
+        metric_card(p4, 
             "Ortalama Hizmet",
             f"%{portfolio['Hizmet %'].mean():.1f}".replace(".", ","),
         )
@@ -3328,15 +3465,15 @@ elif page == "Senaryolar":
             )
 
         with sens_right:
-            st.metric(
+            metric_card(st, 
                 "Minimum Maliyetli Araç Sayısı",
                 int(min_cost_row["Araç"]),
             )
-            st.metric(
+            metric_card(st, 
                 "Minimum Tahmini Maliyet",
                 fmt_tl(min_cost_row["Toplam Maliyet"]),
             )
-            st.metric(
+            metric_card(st, 
                 "Bu Noktadaki Hizmet Seviyesi",
                 f"%{min_cost_row['Hizmet %']:.1f}".replace(".", ","),
             )
@@ -3385,10 +3522,10 @@ elif page == "Raporlar":
 
     r1, r2, r3, r4 = st.columns(4)
 
-    r1.metric("ATM Sayısı", report_summary["atm"])
-    r2.metric("Kritik ATM", report_summary["critical"])
-    r3.metric("Tahmini Talep", fmt_m(report_summary["demand"]))
-    r4.metric("Rota Verimliliği", f"%{report_summary['eff']}")
+    metric_card(r1, "ATM Sayısı", report_summary["atm"])
+    metric_card(r2, "Kritik ATM", report_summary["critical"])
+    metric_card(r3, "Tahmini Talep", fmt_m(report_summary["demand"]))
+    metric_card(r4, "Rota Verimliliği", f"%{report_summary['eff']}")
 
     st.write("")
 
