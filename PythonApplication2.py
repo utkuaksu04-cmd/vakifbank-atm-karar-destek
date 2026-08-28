@@ -1,14 +1,59 @@
 
 import math
+import base64
+import mimetypes
 from datetime import date, timedelta
 from textwrap import dedent
 from html import escape
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+
+
+
+
+# =========================================================
+# VAKIFBANK TEMA GÖRSELİ
+# Repo/local klasörde bulunan PNG/JPG/WEBP görselini otomatik kullanır.
+# Görsel yoksa da CSS fallback logo + watermark görünür.
+# =========================================================
+APP_DIR = Path(__file__).resolve().parent
+
+
+def _find_brand_image():
+    preferred = [
+        "vakifbank_bg.png", "vakifbank_bg.jpg", "vakifbank_bg.jpeg", "vakifbank_bg.webp",
+        "vakifbank_logo.png", "vakifbank_logo.jpg", "vakifbank_logo.jpeg", "vakifbank_logo.webp",
+    ]
+    for name in preferred:
+        p = APP_DIR / name
+        if p.exists():
+            return p
+
+    imgs = [
+        p for p in APP_DIR.iterdir()
+        if p.is_file() and p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
+    ]
+    for p in imgs:
+        if p.name.lower().startswith("chatgpt image"):
+            return p
+    return imgs[0] if imgs else None
+
+
+def _to_data_uri(path):
+    if not path:
+        return None
+    mime = mimetypes.guess_type(path.name)[0] or "image/png"
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime};base64,{encoded}"
+
+
+BRAND_IMAGE_PATH = _find_brand_image()
+BRAND_IMAGE_URI = _to_data_uri(BRAND_IMAGE_PATH)
 
 
 # =========================================================
@@ -669,6 +714,132 @@ st.markdown(
 )
 
 
+# =========================================================
+# VAKIFBANK GÖRSEL KİMLİĞİ
+# Sol üst logo + ana içerikte büyük, hafif VB watermark.
+# Görsel varsa ayrıca çok hafif arka plan dokusu olarak kullanılır.
+# =========================================================
+_bg_layer = (
+    f'linear-gradient(rgba(6,17,27,.94), rgba(6,17,27,.96)), '
+    f'url("{BRAND_IMAGE_URI}") center center / cover fixed no-repeat'
+    if BRAND_IMAGE_URI
+    else 'linear-gradient(180deg,#07131f 0%,#06111b 100%)'
+)
+
+_logo_bg = (
+    f'background-image:url("{BRAND_IMAGE_URI}");'
+    if BRAND_IMAGE_URI
+    else ''
+)
+
+st.markdown(
+    f"""
+    <style>
+    /* Ana alan: görsel varsa çok hafif doku */
+    .stApp,
+    [data-testid="stApp"],
+    [data-testid="stAppViewContainer"] {{
+        background:{_bg_layer} !important;
+    }}
+
+    /* Büyük arka plan watermark - MES'teki gibi dekoratif */
+    [data-testid="stAppViewContainer"]::before {{
+        content:"VB";
+        position:fixed;
+        right:5vw;
+        top:18%;
+        font-size:min(38vw,620px);
+        font-weight:1000;
+        font-style:italic;
+        line-height:.8;
+        letter-spacing:-.10em;
+        color:rgba(255,255,255,.028);
+        pointer-events:none;
+        z-index:0;
+        user-select:none;
+    }}
+
+    [data-testid="stAppViewContainer"] > .main,
+    [data-testid="stMain"] {{
+        position:relative;
+        z-index:1;
+        background:transparent !important;
+    }}
+
+    /* Sidebar koyu ve temiz kalsın */
+    section[data-testid="stSidebar"] {{
+        background:linear-gradient(180deg,#07131f 0%,#071824 100%) !important;
+        border-right:1px solid #1d3142 !important;
+    }}
+
+    /* Sol üst VakıfBank logo alanı */
+    .vb-logo-wrap {{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin:8px 2px 5px 2px;
+        min-height:54px;
+    }}
+
+    .vb-logo-mark {{
+        width:42px;
+        height:36px;
+        border-radius:9px 3px 9px 3px;
+        background:linear-gradient(135deg,#FFD54A,#F3B700);
+        position:relative;
+        transform:skewX(-9deg);
+        box-shadow:0 8px 22px rgba(255,213,74,.10);
+        flex:0 0 auto;
+    }}
+
+    .vb-logo-mark::before {{
+        content:"V";
+        position:absolute;
+        inset:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        transform:skewX(9deg);
+        color:#07131f;
+        font-size:1.15rem;
+        font-weight:1000;
+        font-style:italic;
+    }}
+
+    .vb-logo-copy {{
+        color:#ffffff;
+        font-size:1.55rem;
+        font-weight:950;
+        font-style:italic;
+        letter-spacing:-.8px;
+        line-height:1;
+    }}
+
+    .vb-logo-sub {{
+        color:#FFD54A;
+        font-size:.60rem;
+        font-weight:750;
+        margin-top:4px;
+        letter-spacing:.15px;
+    }}
+
+    /* Eğer repo görseli varsa küçük logo alanına da yumuşak marka dokusu ekle */
+    .vb-logo-image-accent {{
+        {_logo_bg}
+        background-size:cover;
+        background-position:left top;
+        opacity:.10;
+        position:absolute;
+        inset:0;
+        border-radius:inherit;
+        pointer-events:none;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 
 
 # =========================================================
@@ -1017,9 +1188,14 @@ with st.sidebar:
     st.markdown(
         compact_html(
             """
-            <div class="vb-brand">
-                <div class="vb-mark"><span>VB</span></div>
-                <div class="vb-brand-name">VakıfBank</div>
+            <div class="vb-logo-wrap">
+                <div class="vb-logo-mark">
+                    <div class="vb-logo-image-accent"></div>
+                </div>
+                <div>
+                    <div class="vb-logo-copy">VakıfBank</div>
+                    <div class="vb-logo-sub">ATM KARAR DESTEK SİSTEMİ</div>
+                </div>
             </div>
             """
         ),
