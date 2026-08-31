@@ -45,22 +45,25 @@ st.markdown(
     dedent("""
     <style>
     :root {
-        --bg:#06111b;
-        --bg2:#081622;
-        --panel:#0f1d2a;
-        --panel2:#102230;
-        --panel3:#132738;
-        --line:#263b4d;
-        --text:#f7f9fb;
-        --muted:#8fa3b6;
-        --yellow:#ffbf00;
-        --yellow2:#ffd24a;
-        --green:#45c86a;
-        --red:#ff4e57;
-        --orange:#ff9d31;
-        --blue:#4d9cff;
-        --purple:#8f75ff;
-        --cyan:#32c5c7;
+        --bg:#f6f7f9;
+        --bg2:#ffffff;
+        --panel:#ffffff;
+        --panel2:#fbfbfc;
+        --panel3:#f2f4f7;
+        --line:#e2e6eb;
+        --text:#1d2129;
+        --muted:#697586;
+        --yellow:#f5c400;
+        --yellow2:#ffd84a;
+        --yellow-dark:#9b7900;
+        --sidebar:#20252b;
+        --sidebar2:#272d35;
+        --green:#1f9d55;
+        --red:#d9363e;
+        --orange:#d98200;
+        --blue:#355b7d;
+        --purple:#7561a8;
+        --cyan:#268b8d;
     }
 
     html, body, [class*="css"] {
@@ -73,7 +76,8 @@ st.markdown(
     [data-testid="stApp"],
     [data-testid="stAppViewContainer"],
     [data-testid="stAppViewContainer"] > .main {
-        background:#07131f !important;
+        background:var(--bg) !important;
+        color:var(--text) !important;
     }
 
     header[data-testid="stHeader"] {
@@ -103,9 +107,10 @@ st.markdown(
 
     .stApp {
         background:
-            radial-gradient(circle at 82% -12%,rgba(55,90,130,.18),transparent 30%),
-            linear-gradient(180deg,#07131f 0%,#06111b 100%);
-        color:var(--text);
+            radial-gradient(circle at 88% 4%, rgba(255,191,0,.18), transparent 30%),
+            radial-gradient(circle at 7% 92%, rgba(255,214,74,.11), transparent 32%),
+            linear-gradient(135deg, #ffffff 0%, #fafafa 52%, #fff8df 100%) !important;
+        color:var(--text) !important;
     }
 
     .block-container {
@@ -117,13 +122,13 @@ st.markdown(
         padding-bottom:2rem !important;
     }
 
-    /* Sidebar dimensions closer to the reference */
+    /* Dark VakıfBank-style sidebar */
     section[data-testid="stSidebar"] {
         width:315px !important;
         min-width:315px !important;
-        background:linear-gradient(180deg,#07131e 0%,#081622 58%,#091a27 100%) !important;
-        border-right:1px solid #263b4d !important;
-        box-shadow:10px 0 34px rgba(0,0,0,.16);
+        background:linear-gradient(180deg,var(--sidebar) 0%,#242a31 58%,#1d2228 100%) !important;
+        border-right:3px solid var(--yellow) !important;
+        box-shadow:10px 0 30px rgba(17,24,39,.14), 4px 0 18px rgba(255,191,0,.08);
     }
 
     section[data-testid="stSidebar"] > div:first-child {
@@ -135,7 +140,7 @@ st.markdown(
     }
 
     section[data-testid="stSidebar"] * {
-        color:#eef3f7;
+        color:#f5f6f7;
     }
 
     [data-testid="stSidebarCollapseButton"] {
@@ -156,16 +161,16 @@ st.markdown(
     }
 
     section[data-testid="stSidebar"] label[data-baseweb="radio"]:hover {
-        background:#102231;
+        background:#303741;
     }
 
     section[data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) {
-        background:linear-gradient(90deg,rgba(255,191,0,.20),rgba(255,191,0,.07));
+        background:linear-gradient(90deg,rgba(245,196,0,.24),rgba(245,196,0,.08));
         box-shadow:inset 3px 0 0 var(--yellow);
     }
 
     section[data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) p {
-        color:#ffd548 !important;
+        color:#ffe36b !important;
         font-weight:850 !important;
     }
 
@@ -185,7 +190,7 @@ st.markdown(
 
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
-        color:#aebfce !important;
+        color:#b7c0ca !important;
         font-size:.80rem !important;
         line-height:1.45 !important;
     }
@@ -222,7 +227,7 @@ st.markdown(
         font-size:.78rem;
         font-weight:1000;
         transform:skewX(-10deg);
-        box-shadow:0 9px 24px rgba(255,191,0,.12);
+        box-shadow:0 8px 22px rgba(245,196,0,.20);
     }
 
     .vb-mark span { transform:skewX(10deg); }
@@ -240,9 +245,9 @@ st.markdown(
         align-items:center;
         justify-content:space-between;
         gap:18px;
-        padding:3px 0 13px;
-        border-bottom:1px solid rgba(255,255,255,.045);
-        margin-bottom:10px;
+        padding:5px 0 14px;
+        border-bottom:1px solid var(--line);
+        margin-bottom:12px;
     }
 
     .app-header-left {
@@ -260,14 +265,15 @@ st.markdown(
         display:flex;
         align-items:center;
         justify-content:center;
-        background:#0d1d2b;
-        border:1px solid #243a4c;
-        color:#fff;
+        background:#fff;
+        border:1px solid var(--line);
+        color:#252a31;
         font-size:1.1rem;
+        box-shadow:0 4px 12px rgba(17,24,39,.04);
     }
 
     .app-title {
-        color:#fff;
+        color:#171a1f;
         font-size:clamp(1.45rem,2.1vw,2.12rem);
         line-height:1.06;
         font-weight:900;
@@ -277,9 +283,9 @@ st.markdown(
     }
 
     .app-subtitle {
-        color:var(--yellow);
+        color:var(--yellow-dark);
         font-size:.76rem;
-        font-weight:760;
+        font-weight:800;
         margin-top:5px;
     }
 
@@ -298,8 +304,9 @@ st.markdown(
         align-items:center;
         justify-content:center;
         border-radius:10px;
-        border:1px solid #263b4d;
-        background:#0d1c29;
+        border:1px solid var(--line);
+        background:#fff;
+        color:#252a31;
         font-size:1rem;
     }
 
@@ -326,7 +333,7 @@ st.markdown(
         display:flex;
         align-items:center;
         justify-content:center;
-        background:linear-gradient(135deg,#6d8093,#2e4050);
+        background:#2d333b;
         color:#fff;
         font-size:.7rem;
         font-weight:900;
@@ -334,70 +341,74 @@ st.markdown(
 
     .user-copy strong {
         display:block;
-        color:#fff;
+        color:#252a31;
         font-size:.71rem;
     }
 
     .user-copy span {
         display:block;
-        color:#8296a8;
+        color:#7a8490;
         font-size:.58rem;
         margin-top:2px;
     }
 
     /* Inputs */
     label[data-testid="stWidgetLabel"] p {
-        color:#e7eef5 !important;
+        color:#2d333b !important;
         font-size:.73rem !important;
-        font-weight:760 !important;
+        font-weight:780 !important;
     }
 
     div[data-baseweb="select"] > div,
     div[data-testid="stDateInput"] input,
-    div[data-testid="stTextInput"] input {
-        background:#0d1c29 !important;
-        color:#f7f9fb !important;
-        border-color:#2a4053 !important;
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stNumberInput"] input {
+        background:#ffffff !important;
+        color:#1f2937 !important;
+        border-color:#d9dee5 !important;
         border-radius:9px !important;
         min-height:40px !important;
     }
 
     div[data-baseweb="select"] > div:focus-within,
     div[data-testid="stDateInput"] input:focus,
-    div[data-testid="stTextInput"] input:focus {
-        border-color:#cfa81f !important;
-        box-shadow:0 0 0 2px rgba(255,191,0,.08) !important;
+    div[data-testid="stTextInput"] input:focus,
+    div[data-testid="stNumberInput"] input:focus {
+        border-color:#d0aa00 !important;
+        box-shadow:0 0 0 2px rgba(245,196,0,.14) !important;
     }
 
     /* Buttons */
     .stButton > button {
         min-height:40px;
         border-radius:9px;
-        border:1px solid #30475a;
-        background:#0d1c29;
-        color:#d5e0e8;
+        border:1px solid #d9dee5;
+        background:#ffffff;
+        color:#30363d;
         font-size:.70rem;
-        font-weight:800;
+        font-weight:820;
+        box-shadow:0 2px 7px rgba(17,24,39,.03);
     }
 
     .stButton > button:hover {
-        border-color:#51687a;
-        color:#fff;
+        border-color:#c9ced5;
+        background:#f9fafb;
+        color:#111827;
     }
 
     .stButton > button[kind="primary"] {
         background:linear-gradient(135deg,var(--yellow),var(--yellow2));
         color:#111;
-        border:none;
+        border:1px solid #e6b900;
         font-weight:900;
     }
 
     /* Bordered Streamlit containers */
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background:linear-gradient(180deg,#0f1d2a 0%,#0b1824 100%);
-        border:1px solid #263b4d !important;
+        background:#ffffff;
+        border:1px solid var(--line) !important;
         border-radius:14px !important;
-        box-shadow:0 12px 28px rgba(0,0,0,.08);
+        box-shadow:0 8px 24px rgba(17,24,39,.05);
     }
 
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
@@ -406,28 +417,35 @@ st.markdown(
 
     /* Native metrics for sub-pages */
     div[data-testid="stMetric"] {
-        background:linear-gradient(180deg,#102230 0%,#0e1b28 100%);
-        border:1px solid #263b4d;
+        background:#ffffff;
+        border:1px solid var(--line);
         border-radius:13px;
         padding:13px 14px;
         min-height:102px;
         overflow:hidden;
+        box-shadow:0 6px 18px rgba(17,24,39,.04);
     }
 
-    div[data-testid="stMetricLabel"] {
-        color:#9eb0c0;
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] p {
+        color:#6b7280 !important;
         font-size:.70rem;
     }
 
-    div[data-testid="stMetricValue"] {
-        color:#fff;
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] * {
+        color:#171a1f !important;
         font-weight:900;
         font-size:1.55rem;
     }
 
+    div[data-testid="stMetricDelta"] * {
+        color:#59636f !important;
+    }
+
     /* Titles in panels */
     h1,h2,h3 {
-        color:#fff;
+        color:#171a1f !important;
         letter-spacing:-.35px;
     }
 
@@ -437,8 +455,10 @@ st.markdown(
         margin-bottom:.35rem !important;
     }
 
-    [data-testid="stCaptionContainer"] {
-        color:#8296a8 !important;
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] p,
+    [data-testid="stCaptionContainer"] span {
+        color:#707b88 !important;
         font-size:.66rem !important;
     }
 
@@ -446,12 +466,12 @@ st.markdown(
     .kpi-card {
         position:relative;
         min-height:116px;
-        background:linear-gradient(180deg,#102230 0%,#0e1b28 100%);
-        border:1px solid #263b4d;
+        background:#ffffff;
+        border:1px solid var(--line);
         border-radius:14px;
         padding:15px 15px;
         overflow:hidden;
-        box-shadow:0 12px 28px rgba(0,0,0,.08);
+        box-shadow:0 8px 24px rgba(17,24,39,.05);
     }
 
     .kpi-top {
@@ -472,20 +492,20 @@ st.markdown(
         font-weight:950;
     }
 
-    .kpi-icon.blue { color:#8ab5ff;background:rgba(77,156,255,.18); }
-    .kpi-icon.green { color:#86e19a;background:rgba(69,200,106,.16); }
-    .kpi-icon.red { color:#ff8b91;background:rgba(255,78,87,.16); }
-    .kpi-icon.purple { color:#b7a9ff;background:rgba(143,117,255,.16); }
-    .kpi-icon.cyan { color:#80edef;background:rgba(50,197,199,.16); }
+    .kpi-icon.blue { color:#8b6d00;background:rgba(245,196,0,.18); }
+    .kpi-icon.green { color:#147a3f;background:rgba(31,157,85,.12); }
+    .kpi-icon.red { color:#bd2f36;background:rgba(217,54,62,.11); }
+    .kpi-icon.purple { color:#655296;background:rgba(117,97,168,.11); }
+    .kpi-icon.cyan { color:#1e7476;background:rgba(38,139,141,.11); }
 
     .kpi-label {
-        color:#c6d1db;
+        color:#697586;
         font-size:.72rem;
         margin-bottom:5px;
     }
 
     .kpi-value {
-        color:#fff;
+        color:#171a1f;
         font-size:1.72rem;
         font-weight:950;
         line-height:1;
@@ -494,24 +514,25 @@ st.markdown(
     }
 
     .kpi-note {
-        color:#8194a6;
+        color:#7a8490;
         font-size:.64rem;
         margin-top:7px;
     }
 
-    .kpi-good { color:#62d47d; }
-    .kpi-bad { color:#ff6d75; }
+    .kpi-good { color:#168647; }
+    .kpi-bad { color:#c7343c; }
 
     /* Dashboard route cards */
     .route-card {
-        background:#102130;
-        border:1px solid #2a3e51;
+        background:#ffffff;
+        border:1px solid var(--line);
         border-left:3px solid var(--route-color);
         border-radius:11px;
         padding:11px 12px;
         margin-bottom:9px;
         overflow:hidden;
         width:100%;
+        box-shadow:0 5px 14px rgba(17,24,39,.035);
     }
 
     .route-head {
@@ -523,7 +544,7 @@ st.markdown(
     }
 
     .route-name {
-        color:#fff;
+        color:#1f2937;
         font-size:.78rem;
         font-weight:900;
     }
@@ -533,8 +554,8 @@ st.markdown(
         margin-top:5px;
         padding:3px 7px;
         border-radius:999px;
-        background:#173249;
-        color:#8ec3ff;
+        background:#fff6c7;
+        color:#705900;
         font-size:.58rem;
         font-weight:850;
     }
@@ -546,146 +567,124 @@ st.markdown(
 
     .route-metric span {
         display:block;
-        color:#8194a6;
+        color:#7a8490;
         font-size:.50rem;
         margin-bottom:3px;
         text-transform:uppercase;
     }
 
     .route-metric strong {
-        color:#fff;
+        color:#1f2937;
         font-size:.72rem;
         white-space:nowrap;
     }
 
     .route-stops {
-        border-top:1px solid rgba(255,255,255,.06);
+        border-top:1px solid #eef0f3;
         margin-top:7px;
         padding-top:6px;
-        color:#a5b5c2;
+        color:#6b7280;
         font-size:.57rem;
         line-height:1.4;
     }
 
     /* Data frames */
     div[data-testid="stDataFrame"] {
-        border:1px solid #263b4d;
+        border:1px solid var(--line);
         border-radius:11px;
         overflow:hidden;
+        background:#fff;
     }
 
-
-    /* =====================================================
-       ROTA / SENARYO - KOYU FORM TEMASI
-       ===================================================== */
-
+    /* Expanders / forms */
     div[data-testid="stExpander"] details {
-        background:linear-gradient(180deg,#0f1d2a 0%,#0b1824 100%) !important;
-        border:1px solid #263b4d !important;
+        background:#ffffff !important;
+        border:1px solid var(--line) !important;
         border-radius:13px !important;
         overflow:hidden !important;
     }
 
     div[data-testid="stExpander"] details > summary {
-        background:#102230 !important;
-        color:#ffffff !important;
-        border-bottom:1px solid rgba(255,255,255,.05) !important;
+        background:#fafbfc !important;
+        color:#1f2937 !important;
+        border-bottom:1px solid #edf0f2 !important;
     }
 
     div[data-testid="stExpander"] details > summary:hover {
-        background:#142838 !important;
+        background:#f5f6f8 !important;
     }
 
     div[data-testid="stExpander"] details > summary p,
     div[data-testid="stExpander"] details > summary span,
     div[data-testid="stExpander"] details > summary svg {
-        color:#ffffff !important;
-        fill:#ffffff !important;
+        color:#1f2937 !important;
+        fill:#1f2937 !important;
     }
 
     div[data-testid="stExpander"] details[open] > div {
-        background:#0d1b28 !important;
-        color:#f7f9fb !important;
+        background:#ffffff !important;
+        color:#1f2937 !important;
     }
 
     div[data-testid="stNumberInput"] div[data-baseweb="input"],
-    div[data-testid="stNumberInput"] input,
-    div[data-testid="stTextInput"] div[data-baseweb="input"],
-    div[data-testid="stTextInput"] input {
-        background:#0d1c29 !important;
-        color:#ffffff !important;
-        border-color:#2a4053 !important;
+    div[data-testid="stTextInput"] div[data-baseweb="input"] {
+        background:#ffffff !important;
+        color:#1f2937 !important;
+        border-color:#d9dee5 !important;
     }
 
     div[data-testid="stNumberInput"] button {
-        background:#102230 !important;
-        color:#ffffff !important;
-        border-color:#2a4053 !important;
+        background:#f7f8fa !important;
+        color:#1f2937 !important;
+        border-color:#d9dee5 !important;
     }
 
     div[data-testid="stNumberInput"] button svg {
-        color:#ffffff !important;
-        fill:#ffffff !important;
-    }
-
-    div[data-baseweb="select"] > div {
-        background:#0d1c29 !important;
-        color:#ffffff !important;
-        border-color:#2a4053 !important;
+        color:#1f2937 !important;
+        fill:#1f2937 !important;
     }
 
     div[data-baseweb="select"] span,
     div[data-baseweb="select"] input {
-        color:#ffffff !important;
+        color:#1f2937 !important;
     }
 
     div[data-baseweb="popover"] ul,
     ul[data-testid="stSelectboxVirtualDropdown"],
     div[data-baseweb="menu"] {
-        background:#0d1c29 !important;
-        color:#ffffff !important;
-        border:1px solid #2a4053 !important;
+        background:#ffffff !important;
+        color:#1f2937 !important;
+        border:1px solid #d9dee5 !important;
     }
 
     div[role="option"] {
-        background:#0d1c29 !important;
-        color:#ffffff !important;
+        background:#ffffff !important;
+        color:#1f2937 !important;
     }
 
     div[role="option"]:hover,
     div[role="option"][aria-selected="true"] {
-        background:#173249 !important;
-        color:#ffffff !important;
+        background:#fff6c7 !important;
+        color:#1f2937 !important;
     }
 
     div[data-testid="stToggle"] label p,
     div[data-testid="stExpander"] p,
     div[data-testid="stExpander"] label,
     div[data-testid="stExpander"] span {
-        color:#dbe4ec !important;
+        color:#313842 !important;
     }
 
-    /* =====================================================
-       GENEL METİN KONTRASTI - KOYU TEMA
-       ===================================================== */
-
-    /* Ana içerikte kaybolan Streamlit metinlerini görünür tut */
+    /* General main-content text contrast */
     [data-testid="stMain"] .stMarkdown p,
     [data-testid="stMain"] .stMarkdown span,
     [data-testid="stMain"] .stText,
     [data-testid="stMain"] label p,
     [data-testid="stMain"] label span {
-        color:#f4f7fa !important;
+        color:#2a3038 !important;
     }
 
-    /* Açıklamalar beyazdan biraz daha yumuşak ama rahat okunur */
-    [data-testid="stCaptionContainer"],
-    [data-testid="stCaptionContainer"] p,
-    [data-testid="stCaptionContainer"] span {
-        color:#aebdcc !important;
-    }
-
-    /* Tabs / segmented-control / BaseWeb tab yazıları */
+    /* Tabs / segmented control */
     div[data-testid="stTabs"] button,
     div[data-testid="stTabs"] button p,
     div[data-testid="stTabs"] button span,
@@ -698,44 +697,39 @@ st.markdown(
     button[data-baseweb="tab"],
     button[data-baseweb="tab"] p,
     button[data-baseweb="tab"] span {
-        color:#ffffff !important;
+        color:#374151 !important;
         font-weight:760 !important;
     }
 
-    /* Koyu temadaki normal buton yazıları */
+    /* Normal and primary buttons */
     .stButton > button:not([kind="primary"]),
     .stButton > button:not([kind="primary"]) p,
     .stButton > button:not([kind="primary"]) span {
-        color:#ffffff !important;
+        color:#30363d !important;
     }
 
-    /* Sarı birincil butonda koyu yazı daha yüksek kontrast verir */
     .stButton > button[kind="primary"],
     .stButton > button[kind="primary"] p,
     .stButton > button[kind="primary"] span {
         color:#111111 !important;
     }
 
-    /* Checkbox / radio / toggle ve slider metinleri */
     div[data-testid="stCheckbox"] p,
     div[data-testid="stRadio"] p,
     div[data-testid="stToggle"] p,
     div[data-testid="stSlider"] p,
     div[data-testid="stSlider"] span {
-        color:#f4f7fa !important;
+        color:#30363d !important;
     }
 
-    /* Metric kartlarında etiketlerin fazla kararmasını önle */
-    div[data-testid="stMetricLabel"],
-    div[data-testid="stMetricLabel"] p {
-        color:#c5d2dd !important;
+    /* Keep sidebar radio text light despite general rules */
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] p,
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] span {
+        color:#f5f6f7 !important;
     }
 
-    /* Expander başlığı ve içindeki form metinleri */
-    div[data-testid="stExpander"] details > summary *,
-    div[data-testid="stExpander"] details[open] label p,
-    div[data-testid="stExpander"] details[open] label span {
-        color:#ffffff !important;
+    section[data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) p {
+        color:#ffe36b !important;
     }
 
     /* Alerts */
@@ -744,9 +738,13 @@ st.markdown(
         font-size:.72rem;
     }
 
-    /* Progress */
+    /* Progress uses VakıfBank yellow */
     div[data-testid="stProgress"] > div > div {
-        background:linear-gradient(90deg,var(--blue),var(--green)) !important;
+        background:linear-gradient(90deg,#e3b500,var(--yellow2)) !important;
+    }
+
+    hr {
+        border-color:#e5e7eb !important;
     }
 
     @media (max-width:1100px) {
@@ -763,6 +761,7 @@ st.markdown(
         }
     }
     </style>
+
     """),
     unsafe_allow_html=True,
 )
@@ -1364,8 +1363,8 @@ def map_fig(df, height=430, selected_codes=None, line_points=None, show_city_lab
             pitch=0,
         ),
         margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor="#07131f",
-        plot_bgcolor="#07131f",
+        paper_bgcolor="#f6f7f9",
+        plot_bgcolor="#f6f7f9",
         hoverlabel=dict(
             bgcolor="#ffffff",
             bordercolor="#d6dee7",
@@ -1393,28 +1392,28 @@ def demand_line_chart(values, labels, height=330, y_title="Milyon TL"):
             x=labels,
             y=values,
             mode="lines+markers",
-            line=dict(color="#4d9cff", width=3),
+            line=dict(color="#e1b500", width=3),
             marker=dict(
                 size=7,
-                color="#dceeff",
-                line=dict(color="#4d9cff", width=2),
+                color="#ffffff",
+                line=dict(color="#e1b500", width=2),
             ),
             fill="tozeroy",
-            fillcolor="rgba(77,156,255,.12)",
+            fillcolor="rgba(245,196,0,.13)",
         )
     )
 
     fig.update_layout(
         height=height,
         margin=dict(l=10, r=10, t=10, b=10),
-        paper_bgcolor="#0f1d2a",
-        plot_bgcolor="#0f1d2a",
-        font=dict(color="#dbe4ec"),
+        paper_bgcolor="#ffffff",
+        plot_bgcolor="#ffffff",
+        font=dict(color="#2f3742"),
         showlegend=False,
         xaxis=dict(showgrid=False, type="category"),
         yaxis=dict(
             title=y_title,
-            gridcolor="rgba(255,255,255,.06)",
+            gridcolor="#e9edf2",
         ),
     )
 
@@ -1752,7 +1751,7 @@ if page == "Dashboard":
                     f"{round(286 * route_factor / 48, 1)} sa",
                     6420 * route_factor,
                     "Trabzon Merkez → Akçaabat → Vakfıkebir → Rize Merkez → Ardeşen",
-                    "#4d9cff",
+                    "#e1b500",
                 ),
                 (
                     "Rota 2 – GRS-01",
@@ -1929,9 +1928,9 @@ if page == "Dashboard":
             health_fig.update_layout(
                 height=245,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(showgrid=False, type="category"),
                 yaxis=dict(
                     title="Operasyon Sağlık Skoru",
@@ -1969,8 +1968,8 @@ if page == "Dashboard":
             risk_pie.update_layout(
                 height=285,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 legend=dict(orientation="h", y=-.05),
             )
             safe_plotly_chart(
@@ -1995,7 +1994,7 @@ if page == "Dashboard":
                 go.Bar(
                     x=demand_by_city["İl"],
                     y=demand_by_city["Talep"],
-                    marker_color="#4d9cff",
+                    marker_color="#e1b500",
                     text=np.round(demand_by_city["Talep"], 1),
                     textposition="outside",
                 )
@@ -2003,9 +2002,9 @@ if page == "Dashboard":
             demand_city_fig.update_layout(
                 height=285,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(showgrid=False, type="category"),
                 yaxis=dict(
                     title="Milyon TL",
@@ -2238,7 +2237,7 @@ elif page == "ATM İzleme":
                         y=cash_curve,
                         mode="lines",
                         name="Tahmini Kalan Nakit",
-                        line=dict(color="#4d9cff", width=3),
+                        line=dict(color="#e1b500", width=3),
                         fill="tozeroy",
                         fillcolor="rgba(77,156,255,.10)",
                     )
@@ -2256,13 +2255,13 @@ elif page == "ATM İzleme":
                 fig.update_layout(
                     height=310,
                     margin=dict(l=10, r=10, t=15, b=10),
-                    paper_bgcolor="#0f1d2a",
-                    plot_bgcolor="#0f1d2a",
-                    font=dict(color="#dbe4ec"),
+                    paper_bgcolor="#ffffff",
+                    plot_bgcolor="#ffffff",
+                    font=dict(color="#2f3742"),
                     xaxis=dict(showgrid=False, type="category"),
                     yaxis=dict(
                         title="TL",
-                        gridcolor="rgba(255,255,255,.06)",
+                        gridcolor="#e9edf2",
                     ),
                     showlegend=False,
                 )
@@ -2293,11 +2292,11 @@ elif page == "ATM İzleme":
             risk_fig.update_layout(
                 height=310,
                 margin=dict(l=10, r=10, t=15, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(showgrid=False, type="category"),
-                yaxis=dict(gridcolor="rgba(255,255,255,.06)"),
+                yaxis=dict(gridcolor="#e9edf2"),
                 legend=dict(orientation="h", y=1.08, x=0),
             )
 
@@ -2447,7 +2446,7 @@ elif page == "Talep Tahmini":
                     mode="lines",
                     line=dict(width=0),
                     fill="tonexty",
-                    fillcolor="rgba(77,156,255,.12)",
+                    fillcolor="rgba(245,196,0,.13)",
                     name="Güven Aralığı",
                 )
             )
@@ -2457,7 +2456,7 @@ elif page == "Talep Tahmini":
                     x=labels,
                     y=values,
                     mode="lines+markers",
-                    line=dict(color="#4d9cff", width=3),
+                    line=dict(color="#e1b500", width=3),
                     marker=dict(size=6),
                     name="Tahmin",
                 )
@@ -2466,13 +2465,13 @@ elif page == "Talep Tahmini":
             fig.update_layout(
                 height=430,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(showgrid=False, type="category"),
                 yaxis=dict(
                     title="Milyon TL",
-                    gridcolor="rgba(255,255,255,.06)",
+                    gridcolor="#e9edf2",
                 ),
             )
 
@@ -2558,19 +2557,19 @@ elif page == "Talep Tahmini":
                 go.Bar(
                     x=day_names,
                     y=profile,
-                    marker_color="#4d9cff",
+                    marker_color="#e1b500",
                 )
             )
             day_fig.update_layout(
                 height=300,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(showgrid=False, type="category"),
                 yaxis=dict(
                     title="Milyon TL",
-                    gridcolor="rgba(255,255,255,.06)",
+                    gridcolor="#e9edf2",
                 ),
             )
             safe_plotly_chart(
@@ -2771,12 +2770,12 @@ elif page == "Kritik Önceliklendirme":
             rank_fig.update_layout(
                 height=390,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(
                     title="Risk Skoru",
-                    gridcolor="rgba(255,255,255,.06)",
+                    gridcolor="#e9edf2",
                     range=[0, 100],
                 ),
                 yaxis=dict(showgrid=False),
@@ -2836,13 +2835,13 @@ elif page == "Kritik Önceliklendirme":
             sens_fig.update_layout(
                 height=330,
                 margin=dict(l=10, r=10, t=20, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(showgrid=False, type="category"),
                 yaxis=dict(
                     title="En Yüksek Skor",
-                    gridcolor="rgba(255,255,255,.06)",
+                    gridcolor="#e9edf2",
                     range=[0, 100],
                 ),
             )
@@ -3132,11 +3131,11 @@ elif page == "Nakit & İkmal Optimizasyonu":
                         number={"prefix": "₺", "valueformat": ",.0f"},
                         title={"text": f"{cash_atm} Mevcut Nakit"},
                         gauge={
-                            "axis": {"range": [0, gauge_max], "tickcolor": "#dbe4ec"},
-                            "bar": {"color": "#4d9cff", "thickness": 0.28},
-                            "bgcolor": "#0f1d2a",
+                            "axis": {"range": [0, gauge_max], "tickcolor": "#6b7280"},
+                            "bar": {"color": "#e1b500", "thickness": 0.28},
+                            "bgcolor": "#f8fafc",
                             "borderwidth": 1,
-                            "bordercolor": "#263b4d",
+                            "bordercolor": "#e2e6eb",
                             "steps": [
                                 {"range": [0, min(reorder_point, gauge_max)], "color": "rgba(255,78,87,.25)"},
                                 {"range": [min(reorder_point, gauge_max), gauge_max], "color": "rgba(69,200,106,.16)"},
@@ -3152,8 +3151,8 @@ elif page == "Nakit & İkmal Optimizasyonu":
                 rq_fig.update_layout(
                     height=330,
                     margin=dict(l=25, r=25, t=55, b=10),
-                    paper_bgcolor="#0f1d2a",
-                    font=dict(color="#f7f9fb"),
+                    paper_bgcolor="#ffffff",
+                    font=dict(color="#2f3742"),
                 )
                 safe_plotly_chart(rq_fig)
 
@@ -3383,7 +3382,7 @@ ATM'nin fiziksel nakit kapasitesi nedeniyle Q* doğrudan uygulanmayabilir. Bu ne
                         x=candidates,
                         y=candidate_costs,
                         mode="lines",
-                        line=dict(color="#4d9cff", width=3),
+                        line=dict(color="#e1b500", width=3),
                         name="Seçili Toplam Maliyet",
                     )
                 )
@@ -3408,16 +3407,16 @@ ATM'nin fiziksel nakit kapasitesi nedeniyle Q* doğrudan uygulanmayabilir. Bu ne
                 cost_fig.update_layout(
                     height=360,
                     margin=dict(l=10, r=10, t=15, b=10),
-                    paper_bgcolor="#0f1d2a",
-                    plot_bgcolor="#0f1d2a",
-                    font=dict(color="#dbe4ec"),
+                    paper_bgcolor="#ffffff",
+                    plot_bgcolor="#ffffff",
+                    font=dict(color="#2f3742"),
                     xaxis=dict(
                         title="Hedef Nakit (TL)",
                         gridcolor="rgba(255,255,255,.04)",
                     ),
                     yaxis=dict(
                         title="Tahmini Maliyet (TL)",
-                        gridcolor="rgba(255,255,255,.06)",
+                        gridcolor="#e9edf2",
                     ),
                     showlegend=False,
                 )
@@ -3635,7 +3634,7 @@ ATM'nin fiziksel nakit kapasitesi nedeniyle Q* doğrudan uygulanmayabilir. Bu ne
                         go.Histogram(
                             x=ending_cash,
                             nbinsx=28,
-                            marker=dict(color="#4d9cff"),
+                            marker=dict(color="#e1b500"),
                             name="Kalan nakit",
                         )
                     )
@@ -3649,11 +3648,11 @@ ATM'nin fiziksel nakit kapasitesi nedeniyle Q* doğrudan uygulanmayabilir. Bu ne
                     hist_cash.update_layout(
                         height=360,
                         margin=dict(l=10, r=10, t=15, b=10),
-                        paper_bgcolor="#0f1d2a",
-                        plot_bgcolor="#0f1d2a",
-                        font=dict(color="#dbe4ec"),
+                        paper_bgcolor="#ffffff",
+                        plot_bgcolor="#ffffff",
+                        font=dict(color="#2f3742"),
                         xaxis=dict(title="Kalan Nakit (TL)", gridcolor="rgba(255,255,255,.04)"),
-                        yaxis=dict(title="Frekans", gridcolor="rgba(255,255,255,.06)"),
+                        yaxis=dict(title="Frekans", gridcolor="#e9edf2"),
                         showlegend=False,
                     )
                     safe_plotly_chart(hist_cash)
@@ -3682,11 +3681,11 @@ ATM'nin fiziksel nakit kapasitesi nedeniyle Q* doğrudan uygulanmayabilir. Bu ne
                     hist_cost.update_layout(
                         height=360,
                         margin=dict(l=10, r=10, t=15, b=10),
-                        paper_bgcolor="#0f1d2a",
-                        plot_bgcolor="#0f1d2a",
-                        font=dict(color="#dbe4ec"),
+                        paper_bgcolor="#ffffff",
+                        plot_bgcolor="#ffffff",
+                        font=dict(color="#2f3742"),
                         xaxis=dict(title="Toplam Maliyet (TL)", gridcolor="rgba(255,255,255,.04)"),
-                        yaxis=dict(title="Frekans", gridcolor="rgba(255,255,255,.06)"),
+                        yaxis=dict(title="Frekans", gridcolor="#e9edf2"),
                         showlegend=False,
                     )
                     safe_plotly_chart(hist_cost)
@@ -3756,11 +3755,11 @@ ATM'nin fiziksel nakit kapasitesi nedeniyle Q* doğrudan uygulanmayabilir. Bu ne
                     scenario_fig.update_layout(
                         height=320,
                         margin=dict(l=10, r=10, t=15, b=10),
-                        paper_bgcolor="#0f1d2a",
-                        plot_bgcolor="#0f1d2a",
-                        font=dict(color="#dbe4ec"),
+                        paper_bgcolor="#ffffff",
+                        plot_bgcolor="#ffffff",
+                        font=dict(color="#2f3742"),
                         xaxis=dict(title="R Değeri (TL)", gridcolor="rgba(255,255,255,.04)"),
-                        yaxis=dict(title="Stockout Olasılığı (%)", gridcolor="rgba(255,255,255,.06)"),
+                        yaxis=dict(title="Stockout Olasılığı (%)", gridcolor="#e9edf2"),
                         showlegend=False,
                     )
                     safe_plotly_chart(scenario_fig)
@@ -4152,11 +4151,11 @@ elif page == "Rota Planlama":
                     cost_fig.update_layout(
                         height=300,
                         margin=dict(l=10, r=10, t=10, b=10),
-                        paper_bgcolor="#0f1d2a",
-                        plot_bgcolor="#0f1d2a",
-                        font=dict(color="#dbe4ec"),
+                        paper_bgcolor="#ffffff",
+                        plot_bgcolor="#ffffff",
+                        font=dict(color="#2f3742"),
                         xaxis=dict(showgrid=False, type="category"),
-                        yaxis=dict(title="TL", gridcolor="rgba(255,255,255,.06)"),
+                        yaxis=dict(title="TL", gridcolor="#e9edf2"),
                         showlegend=False,
                     )
                     safe_plotly_chart(cost_fig)
@@ -4210,9 +4209,9 @@ elif page == "Rota Planlama":
                                 x=matrix.columns,
                                 y=matrix.index,
                                 colorscale=[
-                                    [0, "#102130"],
-                                    [0.5, "#4d9cff"],
-                                    [1, "#ffbf00"],
+                                    [0, "#f3f4f6"],
+                                    [0.5, "#ffe58a"],
+                                    [1, "#e1b500"],
                                 ],
                                 colorbar=dict(title="km"),
                                 hovertemplate="%{y} → %{x}<br>%{z:.1f} km<extra></extra>",
@@ -4221,9 +4220,9 @@ elif page == "Rota Planlama":
                         matrix_fig.update_layout(
                             height=390,
                             margin=dict(l=10, r=10, t=10, b=10),
-                            paper_bgcolor="#0f1d2a",
-                            plot_bgcolor="#0f1d2a",
-                            font=dict(color="#dbe4ec", size=9),
+                            paper_bgcolor="#ffffff",
+                            plot_bgcolor="#ffffff",
+                            font=dict(color="#374151", size=9),
                         )
                         safe_plotly_chart(matrix_fig)
 
@@ -4818,7 +4817,7 @@ elif page == "Senaryolar":
                     x=chart_df["Senaryo"],
                     y=chart_df["Yol Maliyeti"],
                     name="Yol Maliyeti",
-                    marker_color="#4d9cff",
+                    marker_color="#e1b500",
                 )
             )
 
@@ -4875,9 +4874,9 @@ elif page == "Senaryolar":
                 barmode="stack",
                 height=405,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(
                     title="Senaryo",
                     showgrid=False,
@@ -4885,7 +4884,7 @@ elif page == "Senaryolar":
                 ),
                 yaxis=dict(
                     title="Maliyet (TL)",
-                    gridcolor="rgba(255,255,255,.06)",
+                    gridcolor="#e9edf2",
                 ),
             )
 
@@ -4996,9 +4995,9 @@ elif page == "Senaryolar":
         pareto_fig.update_layout(
             height=390,
             margin=dict(l=10, r=10, t=10, b=10),
-            paper_bgcolor="#0f1d2a",
-            plot_bgcolor="#0f1d2a",
-            font=dict(color="#dbe4ec"),
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+            font=dict(color="#2f3742"),
             xaxis=dict(
                 title="OSM Bazlı Toplam Yol Mesafesi (km)",
                 gridcolor="rgba(255,255,255,.05)",
@@ -5181,7 +5180,7 @@ elif page == "Senaryolar":
                     mode="lines+markers",
                     name="Toplam Maliyet",
                     line=dict(
-                        color="#4d9cff",
+                        color="#e1b500",
                         width=3,
                     ),
                 )
@@ -5205,9 +5204,9 @@ elif page == "Senaryolar":
             fleet_fig.update_layout(
                 height=350,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(
                     title="Araç Sayısı",
                     dtick=1,
@@ -5440,8 +5439,8 @@ elif page == "Raporlar":
             donut.update_layout(
                 height=310,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 legend=dict(orientation="h", y=-.05),
             )
             safe_plotly_chart(
@@ -5457,17 +5456,17 @@ elif page == "Raporlar":
                 go.Bar(
                     x=city_counts["İl"],
                     y=city_counts["ATM Sayısı"],
-                    marker_color="#4d9cff",
+                    marker_color="#e1b500",
                 )
             )
             city_fig.update_layout(
                 height=310,
                 margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
+                paper_bgcolor="#ffffff",
+                plot_bgcolor="#ffffff",
+                font=dict(color="#2f3742"),
                 xaxis=dict(showgrid=False, type="category"),
-                yaxis=dict(gridcolor="rgba(255,255,255,.06)"),
+                yaxis=dict(gridcolor="#e9edf2"),
             )
             safe_plotly_chart(
                 city_fig
