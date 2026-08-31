@@ -1,59 +1,28 @@
 
 import math
-import base64
-import mimetypes
+import warnings
 from datetime import date, timedelta
 from textwrap import dedent
-from html import escape
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import requests
 import streamlit as st
 
-
-
-
-# =========================================================
-# VAKIFBANK TEMA GÖRSELİ
-# Repo/local klasörde bulunan PNG/JPG/WEBP görselini otomatik kullanır.
-# Görsel yoksa da CSS fallback logo + watermark görünür.
-# =========================================================
-APP_DIR = Path(__file__).resolve().parent
-
-
-def _find_brand_image():
-    preferred = [
-        "vakifbank_bg.png", "vakifbank_bg.jpg", "vakifbank_bg.jpeg", "vakifbank_bg.webp",
-        "vakifbank_logo.png", "vakifbank_logo.jpg", "vakifbank_logo.jpeg", "vakifbank_logo.webp",
-    ]
-    for name in preferred:
-        p = APP_DIR / name
-        if p.exists():
-            return p
-
-    imgs = [
-        p for p in APP_DIR.iterdir()
-        if p.is_file() and p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
-    ]
-    for p in imgs:
-        if p.name.lower().startswith("chatgpt image"):
-            return p
-    return imgs[0] if imgs else None
-
-
-def _to_data_uri(path):
-    if not path:
-        return None
-    mime = mimetypes.guess_type(path.name)[0] or "image/png"
-    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
-    return f"data:{mime};base64,{encoded}"
-
-
-BRAND_IMAGE_PATH = _find_brand_image()
-BRAND_IMAGE_URI = _to_data_uri(BRAND_IMAGE_PATH)
+# Plotly eski Mapbox katmanı yalnızca terminalde deprecation uyarısı üretir.
+# Uygulama içi operasyon uyarıları etkilenmez.
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    message=r".*scatter_mapbox.*deprecated.*",
+)
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    message=r".*scattermapbox.*deprecated.*",
+)
 
 
 # =========================================================
@@ -150,14 +119,15 @@ st.markdown(
 
     /* Sidebar dimensions closer to the reference */
     section[data-testid="stSidebar"] {
-        width:245px !important;
-        min-width:245px !important;
-        background:linear-gradient(180deg,#07131e 0%,#081622 100%) !important;
-        border-right:1px solid #1d3041 !important;
+        width:315px !important;
+        min-width:315px !important;
+        background:linear-gradient(180deg,#07131e 0%,#081622 58%,#091a27 100%) !important;
+        border-right:1px solid #263b4d !important;
+        box-shadow:10px 0 34px rgba(0,0,0,.16);
     }
 
     section[data-testid="stSidebar"] > div:first-child {
-        width:245px !important;
+        width:315px !important;
     }
 
     section[data-testid="stSidebar"] > div {
@@ -173,15 +143,15 @@ st.markdown(
     }
 
     section[data-testid="stSidebar"] div[role="radiogroup"] {
-        gap:5px;
+        gap:8px;
     }
 
     section[data-testid="stSidebar"] label[data-baseweb="radio"] {
         width:100%;
-        min-height:44px;
+        min-height:50px;
         margin:0;
-        padding:10px 11px;
-        border-radius:10px;
+        padding:12px 13px;
+        border-radius:11px;
         transition:.18s ease;
     }
 
@@ -201,6 +171,33 @@ st.markdown(
 
     section[data-testid="stSidebar"] label[data-baseweb="radio"] > div:first-child {
         display:none !important;
+    }
+
+    section[data-testid="stSidebar"] label[data-baseweb="radio"] p {
+        white-space:nowrap !important;
+        overflow:visible !important;
+        text-overflow:clip !important;
+        font-size:1.02rem !important;
+        line-height:1.30 !important;
+        font-weight:780 !important;
+        letter-spacing:-.1px !important;
+    }
+
+    section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+    section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+        color:#aebfce !important;
+        font-size:.80rem !important;
+        line-height:1.45 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p {
+        font-size:.91rem !important;
+        line-height:1.45 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stAlert"] p {
+        font-size:.89rem !important;
+        font-weight:760 !important;
     }
 
     /* Sidebar brand */
@@ -231,7 +228,7 @@ st.markdown(
     .vb-mark span { transform:skewX(10deg); }
 
     .vb-brand-name {
-        font-size:1.55rem;
+        font-size:1.72rem;
         font-weight:900;
         color:#fff;
         letter-spacing:-.6px;
@@ -350,9 +347,9 @@ st.markdown(
 
     /* Inputs */
     label[data-testid="stWidgetLabel"] p {
-        color:#8fa4b7 !important;
-        font-size:.68rem !important;
-        font-weight:700 !important;
+        color:#e7eef5 !important;
+        font-size:.73rem !important;
+        font-weight:760 !important;
     }
 
     div[data-baseweb="select"] > div,
@@ -415,44 +412,17 @@ st.markdown(
         padding:13px 14px;
         min-height:102px;
         overflow:hidden;
-        color:#ffffff !important;
     }
 
-    /* TÜM SAYFALARDA METRIC KÜÇÜK BAŞLIKLARI */
-    div[data-testid="stMetricLabel"],
-    div[data-testid="stMetricLabel"] > div,
-    div[data-testid="stMetricLabel"] p,
-    div[data-testid="stMetricLabel"] span,
-    div[data-testid="stMetricLabel"] label,
-    div[data-testid="stMetricLabel"] * {
-        color:#FFD54A !important;
-        -webkit-text-fill-color:#FFD54A !important;
-        opacity:1 !important;
-        visibility:visible !important;
-        font-size:.72rem !important;
-        font-weight:850 !important;
-        filter:none !important;
+    div[data-testid="stMetricLabel"] {
+        color:#9eb0c0;
+        font-size:.70rem;
     }
 
-    /* METRIC ANA DEĞERLERİ */
-    div[data-testid="stMetricValue"],
-    div[data-testid="stMetricValue"] > div,
-    div[data-testid="stMetricValue"] p,
-    div[data-testid="stMetricValue"] span,
-    div[data-testid="stMetricValue"] * {
-        color:#FFFFFF !important;
-        -webkit-text-fill-color:#FFFFFF !important;
-        opacity:1 !important;
-        visibility:visible !important;
-        font-weight:900 !important;
+    div[data-testid="stMetricValue"] {
+        color:#fff;
+        font-weight:900;
         font-size:1.55rem;
-        filter:none !important;
-    }
-
-    div[data-testid="stMetricDelta"],
-    div[data-testid="stMetricDelta"] * {
-        opacity:1 !important;
-        visibility:visible !important;
     }
 
     /* Titles in panels */
@@ -509,11 +479,8 @@ st.markdown(
     .kpi-icon.cyan { color:#80edef;background:rgba(50,197,199,.16); }
 
     .kpi-label {
-        color:#FFD54A !important;
-        -webkit-text-fill-color:#FFD54A !important;
-        opacity:1 !important;
+        color:#c6d1db;
         font-size:.72rem;
-        font-weight:800;
         margin-bottom:5px;
     }
 
@@ -607,6 +574,170 @@ st.markdown(
         overflow:hidden;
     }
 
+
+    /* =====================================================
+       ROTA / SENARYO - KOYU FORM TEMASI
+       ===================================================== */
+
+    div[data-testid="stExpander"] details {
+        background:linear-gradient(180deg,#0f1d2a 0%,#0b1824 100%) !important;
+        border:1px solid #263b4d !important;
+        border-radius:13px !important;
+        overflow:hidden !important;
+    }
+
+    div[data-testid="stExpander"] details > summary {
+        background:#102230 !important;
+        color:#ffffff !important;
+        border-bottom:1px solid rgba(255,255,255,.05) !important;
+    }
+
+    div[data-testid="stExpander"] details > summary:hover {
+        background:#142838 !important;
+    }
+
+    div[data-testid="stExpander"] details > summary p,
+    div[data-testid="stExpander"] details > summary span,
+    div[data-testid="stExpander"] details > summary svg {
+        color:#ffffff !important;
+        fill:#ffffff !important;
+    }
+
+    div[data-testid="stExpander"] details[open] > div {
+        background:#0d1b28 !important;
+        color:#f7f9fb !important;
+    }
+
+    div[data-testid="stNumberInput"] div[data-baseweb="input"],
+    div[data-testid="stNumberInput"] input,
+    div[data-testid="stTextInput"] div[data-baseweb="input"],
+    div[data-testid="stTextInput"] input {
+        background:#0d1c29 !important;
+        color:#ffffff !important;
+        border-color:#2a4053 !important;
+    }
+
+    div[data-testid="stNumberInput"] button {
+        background:#102230 !important;
+        color:#ffffff !important;
+        border-color:#2a4053 !important;
+    }
+
+    div[data-testid="stNumberInput"] button svg {
+        color:#ffffff !important;
+        fill:#ffffff !important;
+    }
+
+    div[data-baseweb="select"] > div {
+        background:#0d1c29 !important;
+        color:#ffffff !important;
+        border-color:#2a4053 !important;
+    }
+
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] input {
+        color:#ffffff !important;
+    }
+
+    div[data-baseweb="popover"] ul,
+    ul[data-testid="stSelectboxVirtualDropdown"],
+    div[data-baseweb="menu"] {
+        background:#0d1c29 !important;
+        color:#ffffff !important;
+        border:1px solid #2a4053 !important;
+    }
+
+    div[role="option"] {
+        background:#0d1c29 !important;
+        color:#ffffff !important;
+    }
+
+    div[role="option"]:hover,
+    div[role="option"][aria-selected="true"] {
+        background:#173249 !important;
+        color:#ffffff !important;
+    }
+
+    div[data-testid="stToggle"] label p,
+    div[data-testid="stExpander"] p,
+    div[data-testid="stExpander"] label,
+    div[data-testid="stExpander"] span {
+        color:#dbe4ec !important;
+    }
+
+    /* =====================================================
+       GENEL METİN KONTRASTI - KOYU TEMA
+       ===================================================== */
+
+    /* Ana içerikte kaybolan Streamlit metinlerini görünür tut */
+    [data-testid="stMain"] .stMarkdown p,
+    [data-testid="stMain"] .stMarkdown span,
+    [data-testid="stMain"] .stText,
+    [data-testid="stMain"] label p,
+    [data-testid="stMain"] label span {
+        color:#f4f7fa !important;
+    }
+
+    /* Açıklamalar beyazdan biraz daha yumuşak ama rahat okunur */
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] p,
+    [data-testid="stCaptionContainer"] span {
+        color:#aebdcc !important;
+    }
+
+    /* Tabs / segmented-control / BaseWeb tab yazıları */
+    div[data-testid="stTabs"] button,
+    div[data-testid="stTabs"] button p,
+    div[data-testid="stTabs"] button span,
+    div[data-testid="stSegmentedControl"] button,
+    div[data-testid="stSegmentedControl"] button p,
+    div[data-testid="stSegmentedControl"] button span,
+    div[role="tablist"] button,
+    div[role="tablist"] button p,
+    div[role="tablist"] button span,
+    button[data-baseweb="tab"],
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] span {
+        color:#ffffff !important;
+        font-weight:760 !important;
+    }
+
+    /* Koyu temadaki normal buton yazıları */
+    .stButton > button:not([kind="primary"]),
+    .stButton > button:not([kind="primary"]) p,
+    .stButton > button:not([kind="primary"]) span {
+        color:#ffffff !important;
+    }
+
+    /* Sarı birincil butonda koyu yazı daha yüksek kontrast verir */
+    .stButton > button[kind="primary"],
+    .stButton > button[kind="primary"] p,
+    .stButton > button[kind="primary"] span {
+        color:#111111 !important;
+    }
+
+    /* Checkbox / radio / toggle ve slider metinleri */
+    div[data-testid="stCheckbox"] p,
+    div[data-testid="stRadio"] p,
+    div[data-testid="stToggle"] p,
+    div[data-testid="stSlider"] p,
+    div[data-testid="stSlider"] span {
+        color:#f4f7fa !important;
+    }
+
+    /* Metric kartlarında etiketlerin fazla kararmasını önle */
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] p {
+        color:#c5d2dd !important;
+    }
+
+    /* Expander başlığı ve içindeki form metinleri */
+    div[data-testid="stExpander"] details > summary *,
+    div[data-testid="stExpander"] details[open] label p,
+    div[data-testid="stExpander"] details[open] label span {
+        color:#ffffff !important;
+    }
+
     /* Alerts */
     div[data-testid="stAlert"] {
         border-radius:10px;
@@ -621,8 +752,8 @@ st.markdown(
     @media (max-width:1100px) {
         section[data-testid="stSidebar"],
         section[data-testid="stSidebar"] > div:first-child {
-            width:205px !important;
-            min-width:205px !important;
+            width:245px !important;
+            min-width:245px !important;
         }
 
         .user-copy { display:none; }
@@ -631,242 +762,10 @@ st.markdown(
             grid-template-columns:1fr 1fr;
         }
     }
-
-    /* =====================================================
-       FINAL METRIC COLOR OVERRIDE
-       ATM İzleme / Talep Tahmini / Kritik Önceliklendirme /
-       Nakit Optimizasyonu / Raporlar ve diğer st.metric alanları
-       ===================================================== */
-    [data-testid="stMetric"] [data-testid="stMetricLabel"],
-    [data-testid="stMetric"] [data-testid="stMetricLabel"] *,
-    [data-testid="stMetricLabel"],
-    [data-testid="stMetricLabel"] * {
-        color:#FFD54A !important;
-        -webkit-text-fill-color:#FFD54A !important;
-        opacity:1 !important;
-        visibility:visible !important;
-        font-weight:850 !important;
-        filter:none !important;
-    }
-
-    [data-testid="stMetric"] [data-testid="stMetricValue"],
-    [data-testid="stMetric"] [data-testid="stMetricValue"] *,
-    [data-testid="stMetricValue"],
-    [data-testid="stMetricValue"] * {
-        color:#FFFFFF !important;
-        -webkit-text-fill-color:#FFFFFF !important;
-        opacity:1 !important;
-        visibility:visible !important;
-        filter:none !important;
-    }
-
-
-    /* =====================================================
-       ÖZEL METRIC KARTLARI — RENK GARANTİLİ
-       Küçük başlık: sarı | Değer: beyaz
-       ===================================================== */
-    .vb-metric-card {
-        background:linear-gradient(180deg,#102230 0%,#0e1b28 100%);
-        border:1px solid #263b4d;
-        border-radius:13px;
-        padding:13px 14px;
-        min-height:102px;
-        margin-bottom:12px;
-        overflow:hidden;
-        box-sizing:border-box;
-    }
-
-    .vb-metric-label {
-        color:#FFD54A !important;
-        -webkit-text-fill-color:#FFD54A !important;
-        opacity:1 !important;
-        font-size:.72rem;
-        font-weight:850;
-        line-height:1.25;
-        margin-bottom:7px;
-    }
-
-    .vb-metric-value {
-        color:#FFFFFF !important;
-        -webkit-text-fill-color:#FFFFFF !important;
-        opacity:1 !important;
-        font-size:1.55rem;
-        font-weight:900;
-        line-height:1.05;
-        letter-spacing:-.35px;
-        overflow-wrap:anywhere;
-    }
-
-    .vb-metric-delta {
-        color:#AFC0CF !important;
-        -webkit-text-fill-color:#AFC0CF !important;
-        opacity:1 !important;
-        font-size:.68rem;
-        font-weight:700;
-        margin-top:7px;
-        line-height:1.25;
-        overflow-wrap:anywhere;
-    }
-
     </style>
     """),
     unsafe_allow_html=True,
 )
-
-
-# =========================================================
-# VAKIFBANK GÖRSEL KİMLİĞİ
-# Sol üst logo + ana içerikte büyük, hafif VB watermark.
-# Görsel varsa ayrıca çok hafif arka plan dokusu olarak kullanılır.
-# =========================================================
-_bg_layer = (
-    f'linear-gradient(rgba(6,17,27,.94), rgba(6,17,27,.96)), '
-    f'url("{BRAND_IMAGE_URI}") center center / cover fixed no-repeat'
-    if BRAND_IMAGE_URI
-    else 'linear-gradient(180deg,#07131f 0%,#06111b 100%)'
-)
-
-_logo_bg = (
-    f'background-image:url("{BRAND_IMAGE_URI}");'
-    if BRAND_IMAGE_URI
-    else ''
-)
-
-st.markdown(
-    f"""
-    <style>
-    /* Ana alan: görsel varsa çok hafif doku */
-    .stApp,
-    [data-testid="stApp"],
-    [data-testid="stAppViewContainer"] {{
-        background:{_bg_layer} !important;
-    }}
-
-    /* Büyük arka plan watermark - MES'teki gibi dekoratif */
-    [data-testid="stAppViewContainer"]::before {{
-        content:"VB";
-        position:fixed;
-        right:5vw;
-        top:18%;
-        font-size:min(38vw,620px);
-        font-weight:1000;
-        font-style:italic;
-        line-height:.8;
-        letter-spacing:-.10em;
-        color:rgba(255,255,255,.028);
-        pointer-events:none;
-        z-index:0;
-        user-select:none;
-    }}
-
-    [data-testid="stAppViewContainer"] > .main,
-    [data-testid="stMain"] {{
-        position:relative;
-        z-index:1;
-        background:transparent !important;
-    }}
-
-    /* Sidebar koyu ve temiz kalsın */
-    section[data-testid="stSidebar"] {{
-        background:linear-gradient(180deg,#07131f 0%,#071824 100%) !important;
-        border-right:1px solid #1d3142 !important;
-    }}
-
-    /* Sol üst VakıfBank logo alanı */
-    .vb-logo-wrap {{
-        display:flex;
-        align-items:center;
-        gap:10px;
-        margin:8px 2px 5px 2px;
-        min-height:54px;
-    }}
-
-    .vb-logo-mark {{
-        width:42px;
-        height:36px;
-        border-radius:9px 3px 9px 3px;
-        background:linear-gradient(135deg,#FFD54A,#F3B700);
-        position:relative;
-        transform:skewX(-9deg);
-        box-shadow:0 8px 22px rgba(255,213,74,.10);
-        flex:0 0 auto;
-    }}
-
-    .vb-logo-mark::before {{
-        content:"V";
-        position:absolute;
-        inset:0;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        transform:skewX(9deg);
-        color:#07131f;
-        font-size:1.15rem;
-        font-weight:1000;
-        font-style:italic;
-    }}
-
-    .vb-logo-copy {{
-        color:#ffffff;
-        font-size:1.55rem;
-        font-weight:950;
-        font-style:italic;
-        letter-spacing:-.8px;
-        line-height:1;
-    }}
-
-    .vb-logo-sub {{
-        color:#FFD54A;
-        font-size:.60rem;
-        font-weight:750;
-        margin-top:4px;
-        letter-spacing:.15px;
-    }}
-
-    /* Eğer repo görseli varsa küçük logo alanına da yumuşak marka dokusu ekle */
-    .vb-logo-image-accent {{
-        {_logo_bg}
-        background-size:cover;
-        background-position:left top;
-        opacity:.10;
-        position:absolute;
-        inset:0;
-        border-radius:inherit;
-        pointer-events:none;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-
-
-
-# =========================================================
-# ÖZEL METRIC KARTI
-# Streamlit'in tema/DOM değişikliklerinden etkilenmez.
-# =========================================================
-
-def metric_card(container, label, value, delta=None, *args, **kwargs):
-    label_text = escape(str(label))
-    value_text = escape(str(value))
-
-    delta_html = ""
-    if delta is not None and str(delta) != "":
-        delta_html = (
-            f'<div class="vb-metric-delta">{escape(str(delta))}</div>'
-        )
-
-    container.markdown(
-        f"""
-        <div class="vb-metric-card">
-            <div class="vb-metric-label">{label_text}</div>
-            <div class="vb-metric-value">{value_text}</div>
-            {delta_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 # =========================================================
@@ -928,7 +827,7 @@ SCENARIOS = pd.DataFrame(
 )
 
 RISK_SCORE = {"Yüksek": 3, "Orta": 2, "Düşük": 1}
-RISK_COLOR = {"Yüksek": "#ff4e57", "Orta": "#ffbf00", "Düşük": "#45c86a"}
+RISK_COLOR = {"Yüksek": "#ff3b58", "Orta": "#ffb300", "Düşük": "#20d879"}
 
 CITY_LABELS = pd.DataFrame(
     [
@@ -943,6 +842,46 @@ CITY_LABELS = pd.DataFrame(
 
 
 # =========================================================
+# OSM / OSRM ROTA VE MALİYET MODELİ
+# =========================================================
+#
+# Rota planlamasında düz/temsili mesafe kullanılmaz; gerçek sürüş yolu kullanılır.
+# Yol mesafesi ve sürüş süresi OpenStreetMap yol verisini kullanan
+# OSRM yönlendirme servisinden alınır.
+#
+# Toplam rota maliyeti SADECE:
+#   1) Yol / araç işletme maliyeti
+#   2) Çalışan işçilik maliyeti
+# kalemlerinden oluşur.
+#
+# İş kazası, seminer/konferans, konaklama/harcırah vb. maliyetler
+# ayrı maliyet kategorileri olarak izlenebilir; rota toplamına
+# otomatik olarak dahil edilmez.
+
+OSRM_BASE_URL = "https://router.project-osrm.org"
+
+CITY_DEPOT_CODE = {
+    "Trabzon": "ATM-015",
+    "Rize": "ATM-042",
+    "Ordu": "ATM-022",
+    "Giresun": "ATM-031",
+    "Artvin": "ATM-011",
+}
+
+COST_CATEGORY_CATALOG = pd.DataFrame(
+    [
+        ["Yol / Araç İşletme", "TL / km", "Aktif", "Rota ve senaryo toplamına dahil"],
+        ["İşçilik", "TL / saat / çalışan", "Aktif", "Rota ve senaryo toplamına dahil"],
+        ["İş Kazası / İşgücü Kaybı", "Olay başına", "Ayrı izleme", "Rota toplamına dahil değil"],
+        ["Seminer / Konferans / Eğitim", "Kişi / etkinlik", "Ayrı izleme", "Rota toplamına dahil değil"],
+        ["Konaklama / Harcırah", "Kişi / gün", "Ayrı izleme", "Rota toplamına dahil değil"],
+        ["Fazla Mesai", "Saat / çalışan", "Ayrı izleme", "İstenirse sonraki modelde eklenebilir"],
+    ],
+    columns=["Maliyet Kalemi", "Ölçü Birimi", "Durum", "Model Notu"],
+)
+
+
+# =========================================================
 # YARDIMCI FONKSİYONLAR
 # =========================================================
 
@@ -952,9 +891,10 @@ def compact_html(html_text):
 
 
 def safe_plotly_chart(fig):
-    """Plotly'yi yalnızca config üzerinden render eder; deprecated kwargs uyarısını önler."""
+    """Plotly grafiğini tam genişlikte ve araç çubuğu kapalı render eder."""
     st.plotly_chart(
         fig,
+        use_container_width=True,
         config={
             "displayModeBar": False,
             "responsive": True,
@@ -985,27 +925,305 @@ def scenario_factor(name):
     }[name]
 
 
-def haversine(lat1, lon1, lat2, lon2):
-    r = 6371.0
-    p1 = math.radians(lat1)
-    p2 = math.radians(lat2)
-    dp = math.radians(lat2 - lat1)
-    dl = math.radians(lon2 - lon1)
+@st.cache_data(ttl=3600, show_spinner=False)
+def osrm_route(lat1, lon1, lat2, lon2):
+    """
+    İki koordinat arasındaki gerçek karayolu rotasını OSRM üzerinden alır.
 
-    a = (
-        math.sin(dp / 2) ** 2
-        + math.cos(p1)
-        * math.cos(p2)
-        * math.sin(dl / 2) ** 2
+    Çıktı:
+      distance_km  : sürüş mesafesi (km)
+      duration_min : sürüş süresi (dk)
+      geometry     : haritada çizilecek [(lat, lon), ...] noktaları
+    """
+    coords = (
+        f"{float(lon1):.6f},{float(lat1):.6f};"
+        f"{float(lon2):.6f},{float(lat2):.6f}"
     )
 
-    return 2 * r * math.asin(math.sqrt(a))
+    url = f"{OSRM_BASE_URL}/route/v1/driving/{coords}"
+
+    params = {
+        "overview": "full",
+        "geometries": "geojson",
+        "steps": "false",
+    }
+
+    try:
+        response = requests.get(
+            url,
+            params=params,
+            timeout=12,
+            headers={
+                "User-Agent": "KTU-VakifBank-ATM-DecisionSupport/1.0"
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get("code") != "Ok" or not data.get("routes"):
+            return None
+
+        route = data["routes"][0]
+        coords_geojson = route.get("geometry", {}).get("coordinates", [])
+
+        geometry = [
+            (float(lat), float(lon))
+            for lon, lat in coords_geojson
+        ]
+
+        return {
+            "distance_km": float(route["distance"]) / 1000,
+            "duration_min": float(route["duration"]) / 60,
+            "geometry": geometry,
+            "source": "OpenStreetMap / OSRM",
+        }
+
+    except (requests.RequestException, ValueError, KeyError, TypeError):
+        return None
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def osrm_table(coords_tuple):
+    """
+    Birden fazla nokta için OSRM sürüş mesafesi ve süre matrisi üretir.
+
+    coords_tuple formatı:
+        ((lat, lon), (lat, lon), ...)
+    """
+    if not coords_tuple:
+        return None
+
+    coords_text = ";".join(
+        f"{float(lon):.6f},{float(lat):.6f}"
+        for lat, lon in coords_tuple
+    )
+
+    url = f"{OSRM_BASE_URL}/table/v1/driving/{coords_text}"
+
+    try:
+        response = requests.get(
+            url,
+            params={"annotations": "distance,duration"},
+            timeout=15,
+            headers={
+                "User-Agent": "KTU-VakifBank-ATM-DecisionSupport/1.0"
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get("code") != "Ok":
+            return None
+
+        distances_raw = data.get("distances")
+        durations_raw = data.get("durations")
+
+        if distances_raw is None or durations_raw is None:
+            return None
+
+        distances_km = [
+            [
+                None if value is None else float(value) / 1000
+                for value in row
+            ]
+            for row in distances_raw
+        ]
+
+        durations_min = [
+            [
+                None if value is None else float(value) / 60
+                for value in row
+            ]
+            for row in durations_raw
+        ]
+
+        return {
+            "distances_km": distances_km,
+            "durations_min": durations_min,
+            "source": "OpenStreetMap / OSRM",
+        }
+
+    except (requests.RequestException, ValueError, KeyError, TypeError):
+        return None
+
+
+def nearest_neighbor_order(distance_matrix, start_index=0, return_to_start=False):
+    """
+    OSRM sürüş mesafesi matrisi üzerinde basit en yakın komşu sezgiseli.
+
+    Sonuç:
+        order = ziyaret sırası indeksleri
+        legs  = [(from_index, to_index, km), ...]
+    """
+    n = len(distance_matrix)
+
+    if n == 0:
+        return [], []
+
+    start_index = max(0, min(start_index, n - 1))
+
+    remaining = set(range(n))
+    remaining.remove(start_index)
+
+    order = [start_index]
+    legs = []
+    current = start_index
+
+    while remaining:
+        candidates = []
+
+        for candidate in remaining:
+            distance = distance_matrix[current][candidate]
+
+            if distance is not None:
+                candidates.append((distance, candidate))
+
+        if not candidates:
+            break
+
+        distance, nxt = min(candidates, key=lambda x: x[0])
+
+        legs.append((current, nxt, float(distance)))
+        order.append(nxt)
+
+        current = nxt
+        remaining.remove(nxt)
+
+    if return_to_start and len(order) > 1:
+        return_distance = distance_matrix[current][start_index]
+
+        if return_distance is not None:
+            legs.append((current, start_index, float(return_distance)))
+
+    return order, legs
+
+
+def route_cost_breakdown(
+    road_distance_km,
+    driving_minutes,
+    road_cost_per_km=0.0,
+    hourly_worker_cost=0.0,
+    crew_size=1,
+    service_minutes=0.0,
+    fixed_stop_cost=0.0,
+    service_stop_count=0,
+    include_road=True,
+    include_labor=True,
+    include_fixed_stop=False,
+):
+    """
+    Gerçek OSM/OSRM sürüş rotası için seçili maliyet kalemlerini hesaplar.
+
+    Kalemler:
+      - Yol / araç işletme maliyeti (TL/km)
+      - İşçilik maliyeti (TL/saat/çalışan)
+      - ATM ikmal / durak sabit maliyeti (TL/durak)
+
+    service_minutes toplam hizmet süresidir; sürüş süresine eklenerek
+    işçilik maliyetine yansıtılır.
+    """
+    road_distance_km = float(road_distance_km)
+    driving_minutes = float(driving_minutes)
+    service_minutes = float(service_minutes)
+
+    road_cost = (
+        road_distance_km * float(road_cost_per_km)
+        if include_road
+        else 0.0
+    )
+
+    operation_minutes = driving_minutes + service_minutes
+    labor_hours = operation_minutes / 60
+
+    labor_cost = (
+        labor_hours
+        * int(crew_size)
+        * float(hourly_worker_cost)
+        if include_labor
+        else 0.0
+    )
+
+    fixed_service_cost = (
+        float(fixed_stop_cost) * int(service_stop_count)
+        if include_fixed_stop
+        else 0.0
+    )
+
+    return {
+        "road_cost": road_cost,
+        "labor_cost": labor_cost,
+        "fixed_service_cost": fixed_service_cost,
+        "total_cost": road_cost + labor_cost + fixed_service_cost,
+        "operation_minutes": operation_minutes,
+        "labor_hours": labor_hours,
+    }
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def city_osrm_baseline(city):
+    """
+    Her il için temsili ATM örneklemi üzerinde OSM/OSRM sürüş matrisi kurar
+    ve il operasyon merkezi kabul edilen ATM'den başlayan/dönen bir tur
+    üretir.
+
+    OSRM erişilemezse None döner. Senaryo ekranı bu durumda mevcut
+    temsili karayolu baz değerlerini yedek olarak kullanır.
+    """
+    city_df = ATM[ATM["İl"] == city].copy().reset_index(drop=True)
+
+    if city_df.empty:
+        return None
+
+    coords_tuple = tuple(
+        (float(row["Lat"]), float(row["Lon"]))
+        for _, row in city_df.iterrows()
+    )
+
+    table = osrm_table(coords_tuple)
+
+    if table is None:
+        return None
+
+    depot_code = CITY_DEPOT_CODE.get(city)
+
+    depot_matches = city_df.index[
+        city_df["ATM Kodu"] == depot_code
+    ].tolist()
+
+    start_index = depot_matches[0] if depot_matches else 0
+
+    order, legs = nearest_neighbor_order(
+        table["distances_km"],
+        start_index=start_index,
+        return_to_start=True,
+    )
+
+    total_km = 0.0
+    total_minutes = 0.0
+
+    for from_idx, to_idx, leg_km in legs:
+        total_km += float(leg_km)
+
+        duration = table["durations_min"][from_idx][to_idx]
+
+        if duration is not None:
+            total_minutes += float(duration)
+
+    return {
+        "city": city,
+        "distance_km": total_km,
+        "duration_min": total_minutes,
+        "stop_count": len(city_df),
+        "order": order,
+        "codes": city_df["ATM Kodu"].tolist(),
+        "source": table["source"],
+    }
 
 
 def map_fig(df, height=430, selected_codes=None, line_points=None, show_city_labels=True):
     """
-    API KEY istemeyen uydu tabanı.
-    Plotly white-bg üzerine Esri World Imagery raster katmanı bindirilir.
+    Açık renkli, şehir ve yol isimleri görünür OpenStreetMap operasyon haritası.
+    Rota geometrisi OSRM'den gelir; harita tabanı API anahtarı gerektirmez.
     """
     selected_codes = selected_codes or []
 
@@ -1014,7 +1232,8 @@ def map_fig(df, height=430, selected_codes=None, line_points=None, show_city_lab
         lambda x: 18 if x in selected_codes else 11
     )
 
-    fig = px.scatter_mapbox(
+    # Yeni Plotly MapLibre katmanı: API anahtarı istemeyen OpenStreetMap.
+    fig = px.scatter_map(
         tmp,
         lat="Lat",
         lon="Lon",
@@ -1022,6 +1241,7 @@ def map_fig(df, height=430, selected_codes=None, line_points=None, show_city_lab
         size="Marker Boyutu",
         size_max=18,
         hover_name="ATM Kodu",
+        custom_data=["ATM Kodu"],
         hover_data={
             "İl": True,
             "İlçe": True,
@@ -1032,22 +1252,60 @@ def map_fig(df, height=430, selected_codes=None, line_points=None, show_city_lab
             "Marker Boyutu": False,
         },
         color_discrete_map=RISK_COLOR,
-        zoom=6.2 if len(tmp) > 6 else 8,
+        zoom=6.25 if len(tmp) > 6 else 8.15,
         height=height,
+        opacity=.94,
+        map_style="open-street-map",
     )
 
+    # Seçili ATM'leri altın renkli halka/halo ile ayırt et.
+    if selected_codes:
+        selected_df = tmp[tmp["ATM Kodu"].isin(selected_codes)].copy()
+        if not selected_df.empty:
+            fig.add_trace(
+                go.Scattermap(
+                    lat=selected_df["Lat"],
+                    lon=selected_df["Lon"],
+                    mode="markers",
+                    marker=dict(
+                        size=27,
+                        color="rgba(255,191,0,.28)",
+                        opacity=.82,
+                    ),
+                    hoverinfo="skip",
+                    showlegend=False,
+                    name="Seçili ATM vurgusu",
+                )
+            )
+
+    # Gerçek OSRM sürüş rotası: altta gölge, üstte VakıfBank sarısı.
     if line_points:
+        route_lat = [p[0] for p in line_points]
+        route_lon = [p[1] for p in line_points]
+
         fig.add_trace(
-            go.Scattermapbox(
-                lat=[p[0] for p in line_points],
-                lon=[p[1] for p in line_points],
+            go.Scattermap(
+                lat=route_lat,
+                lon=route_lon,
                 mode="lines",
-                line=dict(width=4, color="#ffbf00"),
+                line=dict(width=9, color="rgba(31,41,55,.30)"),
                 hoverinfo="skip",
-                name="Seçili rota",
+                showlegend=False,
+                name="Rota gölgesi",
+            )
+        )
+        fig.add_trace(
+            go.Scattermap(
+                lat=route_lat,
+                lon=route_lon,
+                mode="lines",
+                line=dict(width=4.5, color="#ffbf00"),
+                hoverinfo="skip",
+                name="Gerçek sürüş rotası",
             )
         )
 
+    # Şehir adlarını taban haritasına ek olarak belirgin biçimde göster.
     if show_city_labels:
         labels = CITY_LABELS.copy()
 
@@ -1055,49 +1313,77 @@ def map_fig(df, height=430, selected_codes=None, line_points=None, show_city_lab
             cities = tmp["İl"].unique().tolist()
             labels = labels[labels["İl"].isin(cities)]
 
+        # Yazıları ATM işaretlerinden biraz yukarı taşı.
+        labels["LabelLat"] = labels["Lat"] + 0.105
+
+        # Hafif beyaz halo etkisi için önce daha büyük açık renk yazı.
         fig.add_trace(
-            go.Scattermapbox(
-                lat=labels["Lat"],
+            go.Scattermap(
+                lat=labels["LabelLat"],
                 lon=labels["Lon"],
                 mode="text",
                 text=labels["İl"],
                 textfont=dict(
-                    color="white",
-                    size=12,
+                    color="rgba(255,255,255,.96)",
+                    size=18,
+                    family="Arial Black",
                 ),
                 hoverinfo="skip",
                 showlegend=False,
+                name="Şehir etiketi zemini",
+            )
+        )
+        fig.add_trace(
+            go.Scattermap(
+                lat=labels["LabelLat"],
+                lon=labels["Lon"],
+                mode="text",
+                text=labels["İl"],
+                textfont=dict(
+                    color="#17324d",
+                    size=14,
+                    family="Arial Black",
+                ),
+                hoverinfo="skip",
+                showlegend=False,
+                name="Şehir etiketleri",
             )
         )
 
+    # Harita merkezini görünür ATM örneklemi üzerinde tut.
+    center_lat = float(tmp["Lat"].mean()) if not tmp.empty else 41.0
+    center_lon = float(tmp["Lon"].mean()) if not tmp.empty else 39.7
+    map_zoom = 6.25 if len(tmp) > 6 else 8.15
+
     fig.update_layout(
-        mapbox=dict(
-            style="white-bg",
-            layers=[
-                dict(
-                    below="traces",
-                    sourcetype="raster",
-                    source=[
-                        "https://server.arcgisonline.com/ArcGIS/rest/services/"
-                        "World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    ],
-                )
-            ],
+        map=dict(
+            style="open-street-map",
+            center=dict(lat=center_lat, lon=center_lon),
+            zoom=map_zoom,
+            bearing=0,
+            pitch=0,
         ),
         margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor="#0f1d2a",
-        plot_bgcolor="#0f1d2a",
+        paper_bgcolor="#07131f",
+        plot_bgcolor="#07131f",
+        hoverlabel=dict(
+            bgcolor="#ffffff",
+            bordercolor="#d6dee7",
+            font=dict(color="#102230", size=12),
+        ),
         legend=dict(
             orientation="h",
-            y=1.01,
-            x=0,
-            font=dict(color="white", size=10),
+            y=1.015,
+            x=.01,
+            bgcolor="rgba(255,255,255,.94)",
+            bordercolor="rgba(23,50,77,.22)",
+            borderwidth=1,
+            font=dict(color="#17324d", size=11),
             title=None,
         ),
     )
 
     return fig
-
 
 def demand_line_chart(values, labels, height=330, y_title="Milyon TL"):
     fig = go.Figure()
@@ -1188,14 +1474,9 @@ with st.sidebar:
     st.markdown(
         compact_html(
             """
-            <div class="vb-logo-wrap">
-                <div class="vb-logo-mark">
-                    <div class="vb-logo-image-accent"></div>
-                </div>
-                <div>
-                    <div class="vb-logo-copy">VakıfBank</div>
-                    <div class="vb-logo-sub">ATM KARAR DESTEK SİSTEMİ</div>
-                </div>
+            <div class="vb-brand">
+                <div class="vb-mark"><span>VB</span></div>
+                <div class="vb-brand-name">VakıfBank</div>
             </div>
             """
         ),
@@ -1209,7 +1490,7 @@ with st.sidebar:
         "ATM İzleme": "▤",
         "Talep Tahmini": "⌁",
         "Kritik Önceliklendirme": "⚠",
-        "Nakit Optimizasyonu": "₺",
+        "Nakit & İkmal Optimizasyonu": "₺",
         "Rota Planlama": "⌖",
         "Senaryolar": "◫",
         "Raporlar": "▥",
@@ -1248,9 +1529,9 @@ PAGE_TITLES = {
         "Kritik ATM Önceliklendirme",
         "Çok kriterli risk skoru ile müdahale sıralaması",
     ),
-    "Nakit Optimizasyonu": (
-        "Nakit Optimizasyonu",
-        "Hizmet seviyesi ve maliyet dengesine göre hedef nakit",
+    "Nakit & İkmal Optimizasyonu": (
+        "Nakit & İkmal Optimizasyonu",
+        "Hedef nakit, R-Q ikmal politikası ve maliyet dengesi",
     ),
     "Rota Planlama": (
         "Rota Planlama",
@@ -1785,8 +2066,8 @@ elif page == "ATM İzleme":
 
     m1, m2, m3, m4 = st.columns(4)
 
-    metric_card(m1, "İzlenen ATM", len(monitor_df))
-    metric_card(m2, 
+    m1.metric("İzlenen ATM", len(monitor_df))
+    m2.metric(
         "Kritik Durum",
         len(monitor_df[monitor_df["Kritiklik"] == "Yüksek"]),
     )
@@ -1800,7 +2081,7 @@ elif page == "ATM İzleme":
     else:
         avg_fill = 0
 
-    metric_card(m3, "Ortalama Doluluk", f"%{avg_fill:.0f}")
+    m3.metric("Ortalama Doluluk", f"%{avg_fill:.0f}")
 
     refill_today = len(
         monitor_df[
@@ -1808,7 +2089,7 @@ elif page == "ATM İzleme":
             < monitor_df["24s Tahmin"] * .70
         ]
     )
-    metric_card(m4, "Bugün İkmal", refill_today)
+    m4.metric("Bugün İkmal", refill_today)
 
     st.write("")
 
@@ -1855,14 +2136,14 @@ elif page == "ATM İzleme":
 
                 a, b = st.columns(2)
 
-                metric_card(a, "Mevcut Nakit", fmt_tl(row["Mevcut Nakit"]))
-                metric_card(b, "24s Tahmin", fmt_tl(row["24s Tahmin"]))
+                a.metric("Mevcut Nakit", fmt_tl(row["Mevcut Nakit"]))
+                b.metric("24s Tahmin", fmt_tl(row["24s Tahmin"]))
 
-                metric_card(a, "Doluluk Oranı", f"%{util:.0f}")
-                metric_card(b, "Kritiklik", row["Kritiklik"])
+                a.metric("Doluluk Oranı", f"%{util:.0f}")
+                b.metric("Kritiklik", row["Kritiklik"])
 
-                metric_card(a, "Önerilen İkmal", fmt_tl(recommended))
-                metric_card(b, 
+                a.metric("Önerilen İkmal", fmt_tl(recommended))
+                b.metric(
                     "Sonraki Kontrol",
                     "12:00" if row["Kritiklik"] == "Yüksek" else "16:00",
                 )
@@ -2130,10 +2411,10 @@ elif page == "Talep Tahmini":
 
     a, b, c, d = st.columns(4)
 
-    metric_card(a, "Toplam Tahmin", fmt_m(total_forecast))
-    metric_card(b, "Günlük Ortalama", fmt_m(avg_forecast))
-    metric_card(c, "Pik Gün", labels[peak_index], fmt_m(peak_value))
-    metric_card(d, 
+    a.metric("Toplam Tahmin", fmt_m(total_forecast))
+    b.metric("Günlük Ortalama", fmt_m(avg_forecast))
+    c.metric("Pik Gün", labels[peak_index], fmt_m(peak_value))
+    d.metric(
         "Tahmin Değişkenliği",
         f"%{cv:.1f}".replace(".", ","),
     )
@@ -2218,9 +2499,9 @@ elif page == "Talep Tahmini":
                     "Talep değişkenliği kontrol altında. Standart güvenlik stoğu yeterli."
                 )
 
-            metric_card(st, "Senaryo", fc_scenario)
-            metric_card(st, "Tahmin Alt Bandı", fmt_m(min(lower)))
-            metric_card(st, "Tahmin Üst Bandı", fmt_m(max(upper)))
+            st.metric("Senaryo", fc_scenario)
+            st.metric("Tahmin Alt Bandı", fmt_m(min(lower)))
+            st.metric("Tahmin Üst Bandı", fmt_m(max(upper)))
 
 
     # -----------------------------------------------------
@@ -2410,14 +2691,14 @@ elif page == "Kritik Önceliklendirme":
 
     k1, k2, k3, k4 = st.columns(4)
 
-    metric_card(k1, 
+    k1.metric(
         "1. Öncelik",
         top["ATM Kodu"],
         f"{top['İl']} / {top['İlçe']}",
     )
-    metric_card(k2, "Acil İkmal", urgent)
-    metric_card(k3, "Ortalama Risk Skoru", f"{avg_score:.0f}")
-    metric_card(k4, "İzleme Gereken", watch)
+    k2.metric("Acil İkmal", urgent)
+    k3.metric("Ortalama Risk Skoru", f"{avg_score:.0f}")
+    k4.metric("İzleme Gereken", watch)
 
     critical_df["Önerilen Aksiyon"] = critical_df["Risk Skoru"].apply(
         lambda x: (
@@ -2571,16 +2852,17 @@ elif page == "Kritik Önceliklendirme":
 
 
 # =========================================================
-# 5. NAKİT OPTİMİZASYONU
+# 5. NAKİT & İKMAL OPTİMİZASYONU
 # =========================================================
 
-elif page == "Nakit Optimizasyonu":
+elif page == "Nakit & İkmal Optimizasyonu":
     f1, f2, f3, f4 = st.columns(4)
 
     with f1:
         cash_city = st.selectbox(
             "İl",
             ["Trabzon", "Rize", "Ordu", "Giresun", "Artvin"],
+            key="cash_city",
         )
 
     cash_df = ATM[ATM["İl"] == cash_city].copy()
@@ -2589,6 +2871,7 @@ elif page == "Nakit Optimizasyonu":
         cash_atm = st.selectbox(
             "ATM",
             cash_df["ATM Kodu"].tolist(),
+            key="cash_atm",
         )
 
     with f3:
@@ -2596,6 +2879,7 @@ elif page == "Nakit Optimizasyonu":
             "Hizmet Seviyesi",
             [90, 95, 98, 99],
             index=1,
+            key="cash_service",
         )
 
     with f4:
@@ -2603,46 +2887,65 @@ elif page == "Nakit Optimizasyonu":
             "Planlama Ufku",
             [1, 2, 3],
             format_func=lambda x: f"{x} Gün",
+            key="cash_days",
         )
 
     row = cash_df[cash_df["ATM Kodu"] == cash_atm].iloc[0]
 
-    c1, c2, c3, c4 = st.columns(4)
+    st.write("")
 
-    with c1:
-        holding_rate = st.slider(
-            "Günlük Taşıma Maliyeti (%)",
-            0.02,
-            0.20,
-            0.08,
-            0.01,
+    # -----------------------------------------------------
+    # TÜM ALT SEKME HESAPLARINDA ORTAK PARAMETRELER
+    # -----------------------------------------------------
+    with st.expander("⚙️ Ortak Nakit ve Maliyet Parametreleri", expanded=False):
+        st.caption(
+            "Bu parametreler hedef nakit, R-Q politikası ve maliyet analizinde ortak kullanılır. "
+            "Değerler prototip amaçlıdır ve gerçek banka verisiyle değiştirilebilir."
         )
 
-    with c2:
-        stock_penalty = st.slider(
-            "Stokout Ceza Maliyeti",
-            1000,
-            10000,
-            5000,
-            500,
-        )
+        cp1, cp2, cp3, cp4 = st.columns(4)
 
-    with c3:
-        fixed_refill_cost = st.slider(
-            "İkmal Sabit Maliyeti",
-            300,
-            2500,
-            900,
-            100,
-        )
+        with cp1:
+            uncertainty = st.slider(
+                "Talep Belirsizliği (%)",
+                5,
+                30,
+                12,
+                key="cash_uncertainty",
+                help="Güvenlik nakdi ve R yeniden sipariş noktası hesabında kullanılır.",
+            )
 
-    with c4:
-        uncertainty = st.slider(
-            "Talep Belirsizliği (%)",
-            5,
-            30,
-            12,
-        )
+        with cp2:
+            holding_rate = st.number_input(
+                "Günlük taşıma maliyeti (%)",
+                min_value=0.01,
+                max_value=2.00,
+                value=0.08,
+                step=0.01,
+                key="cash_holding_rate",
+                help="ATM'de tutulan nakdin günlük fırsat/taşıma maliyeti oranı.",
+            )
+
+        with cp3:
+            fixed_refill_cost = st.number_input(
+                "İkmal başına sabit maliyet (TL)",
+                min_value=1.0,
+                max_value=50000.0,
+                value=900.0,
+                step=100.0,
+                key="cash_fixed_refill_cost",
+                help="Q hesabındaki sipariş/ikmal maliyetini temsil eder.",
+            )
+
+        with cp4:
+            stock_penalty = st.number_input(
+                "Nakitsiz kalma ceza maliyeti (TL)",
+                min_value=0.0,
+                max_value=100000.0,
+                value=5000.0,
+                step=500.0,
+                key="cash_stock_penalty",
+            )
 
     z_value = {
         90: 1.28,
@@ -2651,280 +2954,866 @@ elif page == "Nakit Optimizasyonu":
         99: 2.33,
     }[cash_service]
 
-    demand_needed = row["24s Tahmin"] * cash_days
-
-    safety_stock = (
-        demand_needed
-        * (uncertainty / 100)
-        * z_value
-    )
-
-    target_cash = demand_needed + safety_stock
-
-    refill_amount = max(
-        0,
-        target_cash - row["Mevcut Nakit"],
-    )
+    daily_demand = float(row["24s Tahmin"])
+    demand_needed = daily_demand * cash_days
+    safety_stock = demand_needed * (uncertainty / 100) * z_value
+    service_target_cash = demand_needed + safety_stock
+    refill_amount = max(0.0, service_target_cash - float(row["Mevcut Nakit"]))
 
     risk_before = min(
         99,
         max(
             1,
-            100
-            * (
-                1
-                - row["Mevcut Nakit"]
-                / max(1, demand_needed)
-            ),
+            100 * (1 - float(row["Mevcut Nakit"]) / max(1, demand_needed)),
         ),
     )
-
     risk_after = 100 - cash_service
 
-    holding_cost = (
-        max(0, target_cash - demand_needed)
-        * holding_rate
-        / 100
-        * cash_days
+    tab_target, tab_rq, tab_cost, tab_monte = st.tabs(
+        ["💵 Hedef Nakit", "🔁 R-Q İkmal Politikası", "📊 Maliyet Analizi", "🎲 Monte Carlo Risk Analizi"]
     )
 
-    stockout_cost = (
-        stock_penalty
-        * risk_after
-        / 100
-    )
+    # -----------------------------------------------------
+    # SEKME 1 - HEDEF NAKİT
+    # -----------------------------------------------------
+    with tab_target:
+        st.caption(
+            "Talep tahmini, hizmet seviyesi ve belirsizlik dikkate alınarak ATM için hedef nakit seviyesi hesaplanır."
+        )
 
-    operation_cost = (
-        fixed_refill_cost
-        if refill_amount > 0
-        else 0
-    )
+        left, right = st.columns([1.25, 1])
 
-    total_cost = (
-        holding_cost
-        + stockout_cost
-        + operation_cost
-    )
+        with left:
+            with st.container(border=True):
+                st.subheader("Önerilen Nakit Seviyesi")
 
-    left, right = st.columns([1.2, 1])
+                st.metric(
+                    "Hizmet Seviyesine Göre Hedef Nakit",
+                    fmt_tl(service_target_cash),
+                )
 
-    with left:
-        with st.container(border=True):
-            st.subheader("Önerilen Nakit Seviyesi")
+                a, b = st.columns(2)
+                a.metric("Mevcut Nakit", fmt_tl(row["Mevcut Nakit"]))
+                b.metric("Önerilen İkmal", fmt_tl(refill_amount))
+                a.metric("İkmal Öncesi Risk", f"%{risk_before:.0f}")
+                b.metric("İkmal Sonrası Risk", f"%{risk_after:.0f}")
 
-            metric_card(st, 
-                "Optimum Hedef Nakit",
-                fmt_tl(target_cash),
+                st.progress(cash_service / 100)
+
+                st.caption(
+                    f"{cash_atm} için {cash_days} günlük talep, "
+                    f"%{cash_service} hizmet seviyesi ve "
+                    f"%{uncertainty} talep belirsizliği dikkate alınmıştır."
+                )
+
+        with right:
+            with st.container(border=True):
+                st.subheader("Nakit Yapısı")
+
+                st.metric("Planlama Ufku Talebi", fmt_tl(demand_needed))
+                st.metric("Güvenlik Nakdi", fmt_tl(safety_stock))
+                st.metric("24 Saatlik Tahmin", fmt_tl(daily_demand))
+                st.metric("ATM Kritiklik Sınıfı", str(row["Kritiklik"]))
+
+                coverage_hours = (
+                    float(row["Mevcut Nakit"]) / max(1.0, daily_demand / 24.0)
+                )
+                st.metric("Tahmini Nakit Yeterlilik Süresi", f"{coverage_hours:.1f} saat")
+
+    # -----------------------------------------------------
+    # SEKME 2 - R-Q İKMAL POLİTİKASI
+    # -----------------------------------------------------
+    with tab_rq:
+        st.caption(
+            "R, ikmal emrinin ne zaman tetikleneceğini; Q ise tetikleme olduğunda önerilen sabit ikmal miktarını gösterir."
+        )
+
+        rq_p1, rq_p2, rq_p3 = st.columns(3)
+
+        with rq_p1:
+            lead_time_hours = st.number_input(
+                "İkmal Lead Time (saat)",
+                min_value=1.0,
+                max_value=48.0,
+                value=8.0,
+                step=1.0,
+                key="rq_lead_time_hours",
+                help="İkmal kararından nakdin ATM'ye ulaşıp kullanılabilir olmasına kadar geçen süre.",
             )
 
-            a, b = st.columns(2)
-
-            metric_card(a, 
-                "Mevcut Nakit",
-                fmt_tl(row["Mevcut Nakit"]),
+        with rq_p2:
+            default_capacity = max(
+                150000.0,
+                float(row["Mevcut Nakit"]) * 2.0,
+                service_target_cash * 1.20,
             )
-            metric_card(b, 
-                "Önerilen İkmal",
-                fmt_tl(refill_amount),
-            )
-
-            metric_card(a, 
-                "İkmal Öncesi Risk",
-                f"%{risk_before:.0f}",
-            )
-            metric_card(b, 
-                "İkmal Sonrası Risk",
-                f"%{risk_after:.0f}",
+            atm_capacity = st.number_input(
+                "ATM Maksimum Nakit Kapasitesi (TL)",
+                min_value=50000.0,
+                max_value=1000000.0,
+                value=float(round(default_capacity / 1000) * 1000),
+                step=10000.0,
+                key="rq_atm_capacity",
             )
 
-            st.progress(cash_service / 100)
+        with rq_p3:
+            operating_days = st.selectbox(
+                "Yıllık Planlama Günü",
+                [300, 330, 365],
+                index=2,
+                key="rq_operating_days",
+                help="EOQ tipi Q hesabında yıllık talebi ölçeklemek için kullanılır.",
+            )
 
+        lead_days = float(lead_time_hours) / 24.0
+        lead_demand = daily_demand * lead_days
+
+        # Günlük talep standart sapması için prototip yaklaşımı:
+        # tahminin belirsizlik yüzdesi * günlük talep.
+        sigma_daily = daily_demand * (uncertainty / 100.0)
+        lead_sigma = sigma_daily * math.sqrt(max(lead_days, 1 / 24))
+        rq_safety_stock = z_value * lead_sigma
+
+        reorder_point = lead_demand + rq_safety_stock
+
+        annual_demand = daily_demand * operating_days
+        annual_holding_cost_per_tl = max(
+            0.000001,
+            (holding_rate / 100.0) * operating_days,
+        )
+
+        raw_q = math.sqrt(
+            (2.0 * annual_demand * fixed_refill_cost)
+            / annual_holding_cost_per_tl
+        )
+
+        # Sipariş geldiğinde ortalama elde güvenlik stoğu kaldığı varsayılır;
+        # Q, fiziksel ATM kapasitesini aşmayacak şekilde sınırlandırılır.
+        capacity_limited_q = max(0.0, atm_capacity - rq_safety_stock)
+        order_quantity = min(raw_q, capacity_limited_q)
+
+        current_cash = float(row["Mevcut Nakit"])
+        trigger_order = current_cash <= reorder_point
+
+        hourly_demand = daily_demand / 24.0
+        if current_cash > reorder_point:
+            hours_to_r = (current_cash - reorder_point) / max(hourly_demand, 1.0)
+        else:
+            hours_to_r = 0.0
+
+        hours_to_empty = current_cash / max(hourly_demand, 1.0)
+        expected_cycle_days = order_quantity / max(daily_demand, 1.0)
+        expected_orders_month = (
+            (30.0 * daily_demand) / max(order_quantity, 1.0)
+            if order_quantity > 0
+            else 0.0
+        )
+
+        rq1, rq2, rq3, rq4 = st.columns(4)
+        rq1.metric("R · Yeniden Sipariş Noktası", fmt_tl(reorder_point))
+        rq2.metric("Q · Önerilen İkmal Miktarı", fmt_tl(order_quantity))
+        rq3.metric("Mevcut Nakit", fmt_tl(current_cash))
+        rq4.metric("Lead Time Talebi", fmt_tl(lead_demand))
+
+        st.write("")
+
+        rq_left, rq_right = st.columns([1.35, 1])
+
+        with rq_left:
+            with st.container(border=True):
+                st.subheader("R-Q Nakit Seviyesi Görünümü")
+
+                gauge_max = max(atm_capacity, reorder_point * 1.15, current_cash * 1.15)
+
+                rq_fig = go.Figure(
+                    go.Indicator(
+                        mode="gauge+number",
+                        value=current_cash,
+                        number={"prefix": "₺", "valueformat": ",.0f"},
+                        title={"text": f"{cash_atm} Mevcut Nakit"},
+                        gauge={
+                            "axis": {"range": [0, gauge_max], "tickcolor": "#dbe4ec"},
+                            "bar": {"color": "#4d9cff", "thickness": 0.28},
+                            "bgcolor": "#0f1d2a",
+                            "borderwidth": 1,
+                            "bordercolor": "#263b4d",
+                            "steps": [
+                                {"range": [0, min(reorder_point, gauge_max)], "color": "rgba(255,78,87,.25)"},
+                                {"range": [min(reorder_point, gauge_max), gauge_max], "color": "rgba(69,200,106,.16)"},
+                            ],
+                            "threshold": {
+                                "line": {"color": "#ffbf00", "width": 5},
+                                "thickness": 0.8,
+                                "value": min(reorder_point, gauge_max),
+                            },
+                        },
+                    )
+                )
+                rq_fig.update_layout(
+                    height=330,
+                    margin=dict(l=25, r=25, t=55, b=10),
+                    paper_bgcolor="#0f1d2a",
+                    font=dict(color="#f7f9fb"),
+                )
+                safe_plotly_chart(rq_fig)
+
+                st.caption(
+                    "Sarı eşik R seviyesidir. Mevcut nakit bu seviyeye indiğinde Q kadar ikmal emri tetiklenir."
+                )
+
+        with rq_right:
+            with st.container(border=True):
+                st.subheader("Politika Kararı")
+
+                st.metric("R İçindeki Güvenlik Stoğu", fmt_tl(rq_safety_stock))
+                st.metric("Tahmini Nakit Tükenme Süresi", f"{hours_to_empty:.1f} saat")
+                st.metric(
+                    "R Seviyesine Kalan Süre",
+                    "Eşik aşıldı" if trigger_order else f"{hours_to_r:.1f} saat",
+                )
+                st.metric("Tahmini Sipariş Döngüsü", f"{expected_cycle_days:.1f} gün")
+                st.metric("Tahmini İkmal / Ay", f"{expected_orders_month:.1f}")
+
+                if trigger_order:
+                    if current_cash <= reorder_point * 0.75:
+                        st.error(
+                            f"**Acil ikmal:** Mevcut nakit R seviyesinin belirgin biçimde altında. "
+                            f"Yaklaşık **{fmt_tl(order_quantity)}** ikmal öneriliyor."
+                        )
+                    else:
+                        st.warning(
+                            f"**İkmal emri oluştur:** Mevcut nakit R = **{fmt_tl(reorder_point)}** "
+                            f"seviyesine ulaştı. Q = **{fmt_tl(order_quantity)}** öneriliyor."
+                        )
+                else:
+                    st.success(
+                        f"Şu anda ikmal tetiklenmiyor. Mevcut nakit R seviyesinin üzerinde; "
+                        f"yaklaşık **{hours_to_r:.1f} saat** sonra yeniden sipariş eşiğine ulaşması bekleniyor."
+                    )
+
+        with st.expander("R ve Q nasıl hesaplandı?", expanded=False):
+            st.markdown(
+                f"""
+### R · Yeniden Sipariş Noktası
+
+**Kullanılan formül:**  
+**R = d × L + z × σd × √L**
+
+Burada ilk terim **lead time boyunca beklenen talebi**, ikinci terim ise **güvenlik stoğunu** temsil eder.
+
+- Günlük ortalama talep, **d**: **{fmt_tl(daily_demand)} / gün**
+- Lead time, **L**: **{lead_time_hours:.0f} saat = {lead_days:.3f} gün**
+- Lead time talebi, **d × L**: **{fmt_tl(lead_demand)}**
+- Seçilen hizmet seviyesi: **%{cash_service}**
+- Hizmet seviyesine karşılık gelen **z**: **{z_value:.3f}**
+- Günlük talep standart sapması, **σd**: **{fmt_tl(sigma_daily)}**
+- Güvenlik stoğu, **z × σd × √L**: **{fmt_tl(rq_safety_stock)}**
+- **Sonuç R = {fmt_tl(reorder_point)}**
+
+> Prototipte σd, geçmiş gerçek ATM verisi olmadığı için günlük talebin seçilen **%{uncertainty} talep belirsizliği** ile yaklaşık olarak hesaplanmaktadır. Gerçek banka verisi geldiğinde σd doğrudan geçmiş talebin standart sapmasından hesaplanabilir.
+
+---
+
+### Q · Önerilen İkmal Miktarı
+
+**Önce ekonomik ikmal miktarı hesaplanır:**  
+**Q* = √(2 × D × S / H)**
+
+- Yıllıklaştırılmış talep, **D**: **{fmt_tl(annual_demand)} / yıl**
+- İkmal başına sabit operasyon maliyeti, **S**: **{fmt_tl(fixed_refill_cost)}**
+- Yıllık elde tutma maliyeti, **H**: **{annual_holding_cost_per_tl:.4f} TL / TL-yıl**
+- Ekonomik miktar, **Q***: **{fmt_tl(raw_q)}**
+
+ATM'nin fiziksel nakit kapasitesi nedeniyle Q* doğrudan uygulanmayabilir. Bu nedenle:
+
+**Q = min(Q*, ATM kapasitesi − güvenlik stoğu)**
+
+- ATM maksimum kapasitesi: **{fmt_tl(atm_capacity)}**
+- Güvenlik stoğu için ayrılan kapasite: **{fmt_tl(rq_safety_stock)}**
+- Kullanılabilir ikmal kapasitesi: **{fmt_tl(capacity_limited_q)}**
+- **Sonuç Q = {fmt_tl(order_quantity)}**
+                """
+            )
             st.caption(
-                f"{cash_atm} için {cash_days} günlük talep, "
-                f"%{cash_service} hizmet seviyesi ve "
-                f"%{uncertainty} talep belirsizliği dikkate alınmıştır."
+                "R, ikmal emrinin ne zaman tetikleneceğini; Q ise tetikleme olduğunda önerilen ikmal miktarını belirler. Model, klasik sürekli gözden geçirmeli (Q,R) stok politikasının ATM nakit ikmal problemine uyarlanmış prototipidir."
             )
 
-    with right:
-        with st.container(border=True):
-            st.subheader("Maliyet Dengesi")
+    # -----------------------------------------------------
+    # SEKME 3 - MALİYET ANALİZİ
+    # -----------------------------------------------------
+    with tab_cost:
+        st.caption(
+            "Hangi maliyet kalemlerinin toplam karara dahil edileceğini seçerek hedef nakit seviyelerinin maliyet etkisini karşılaştırabilirsin."
+        )
 
-            metric_card(st, 
-                "Beklenen Taşıma Maliyeti",
-                fmt_tl(holding_cost),
-            )
+        with st.expander("💰 Maliyet Kalemlerini Seç", expanded=True):
+            cost_c1, cost_c2, cost_c3 = st.columns(3)
 
-            metric_card(st, 
-                "Beklenen Stokout Maliyeti",
-                fmt_tl(stockout_cost),
-            )
+            with cost_c1:
+                include_holding = st.toggle(
+                    "Nakit taşıma maliyeti",
+                    value=True,
+                    key="cash_include_holding",
+                )
+                st.caption(f"Günlük oran: %{holding_rate:.2f}")
 
-            metric_card(st, 
-                "İkmal Operasyon Maliyeti",
-                fmt_tl(operation_cost),
-            )
+            with cost_c2:
+                include_stockout = st.toggle(
+                    "Nakitsiz kalma ceza maliyeti",
+                    value=True,
+                    key="cash_include_stockout",
+                )
+                st.caption(f"Ceza katsayısı: {fmt_tl(stock_penalty)}")
 
-            metric_card(st, 
-                "Toplam Tahmini Maliyet",
-                fmt_tl(total_cost),
-            )
+            with cost_c3:
+                include_refill = st.toggle(
+                    "İkmal sabit operasyon maliyeti",
+                    value=True,
+                    key="cash_include_refill",
+                )
+                st.caption(f"İkmal başına: {fmt_tl(fixed_refill_cost)}")
+
+        holding_cost = (
+            max(0, service_target_cash - demand_needed)
+            * holding_rate
+            / 100
+            * cash_days
+            if include_holding
+            else 0.0
+        )
+
+        stockout_cost = (
+            stock_penalty * risk_after / 100
+            if include_stockout
+            else 0.0
+        )
+
+        operation_cost = (
+            fixed_refill_cost
+            if include_refill and refill_amount > 0
+            else 0.0
+        )
+
+        total_cost = holding_cost + stockout_cost + operation_cost
+
+        mc1, mc2, mc3, mc4 = st.columns(4)
+        mc1.metric(
+            "Nakit Taşıma Maliyeti",
+            fmt_tl(holding_cost) if include_holding else "Dahil değil",
+        )
+        mc2.metric(
+            "Nakitsiz Kalma Ceza Maliyeti",
+            fmt_tl(stockout_cost) if include_stockout else "Dahil değil",
+        )
+        mc3.metric(
+            "İkmal Sabit Maliyeti",
+            fmt_tl(operation_cost) if include_refill else "Dahil değil",
+        )
+        mc4.metric("Toplam Tahmini Maliyet", fmt_tl(total_cost))
+
+        active_cash_costs = []
+        if include_holding:
+            active_cash_costs.append("Nakit taşıma")
+        if include_stockout:
+            active_cash_costs.append("Nakitsiz kalma cezası")
+        if include_refill:
+            active_cash_costs.append("İkmal sabit operasyon")
+
+        st.write("")
+        curve_col, service_col = st.columns([1.35, 1])
+
+        with curve_col:
+            with st.container(border=True):
+                st.subheader("Hedef Nakit Seviyesine Göre Toplam Maliyet")
+                st.caption(
+                    "Eğri yalnızca aktif ettiğin maliyet kalemlerinden oluşur."
+                )
+
+                low_candidate = max(
+                    float(row["Mevcut Nakit"]) * 0.75,
+                    demand_needed * 0.50,
+                )
+                high_candidate = max(
+                    service_target_cash * 1.35,
+                    demand_needed * 1.10,
+                )
+                candidates = np.linspace(low_candidate, high_candidate, 45)
+
+                candidate_costs = []
+                for candidate in candidates:
+                    shortage_ratio = max(
+                        0,
+                        1 - candidate / max(1, demand_needed),
+                    )
+
+                    candidate_holding = (
+                        max(0, candidate - demand_needed)
+                        * holding_rate
+                        / 100
+                        * cash_days
+                        if include_holding
+                        else 0.0
+                    )
+
+                    candidate_shortage = (
+                        stock_penalty * shortage_ratio
+                        if include_stockout
+                        else 0.0
+                    )
+
+                    candidate_refill = (
+                        fixed_refill_cost
+                        if include_refill and candidate > float(row["Mevcut Nakit"])
+                        else 0.0
+                    )
+
+                    candidate_costs.append(
+                        candidate_holding
+                        + candidate_shortage
+                        + candidate_refill
+                    )
+
+                best_idx = int(np.argmin(candidate_costs))
+                best_candidate = float(candidates[best_idx])
+                best_cost = float(candidate_costs[best_idx])
+
+                cost_fig = go.Figure()
+                cost_fig.add_trace(
+                    go.Scatter(
+                        x=candidates,
+                        y=candidate_costs,
+                        mode="lines",
+                        line=dict(color="#4d9cff", width=3),
+                        name="Seçili Toplam Maliyet",
+                    )
+                )
+                cost_fig.add_trace(
+                    go.Scatter(
+                        x=[best_candidate],
+                        y=[best_cost],
+                        mode="markers+text",
+                        text=["Minimum"],
+                        textposition="top center",
+                        marker=dict(size=11, color="#ffbf00"),
+                        name="Minimum",
+                    )
+                )
+                cost_fig.add_vline(
+                    x=service_target_cash,
+                    line_dash="dash",
+                    line_color="#45c86a",
+                    annotation_text="Hizmet hedefi",
+                    annotation_position="top right",
+                )
+                cost_fig.update_layout(
+                    height=360,
+                    margin=dict(l=10, r=10, t=15, b=10),
+                    paper_bgcolor="#0f1d2a",
+                    plot_bgcolor="#0f1d2a",
+                    font=dict(color="#dbe4ec"),
+                    xaxis=dict(
+                        title="Hedef Nakit (TL)",
+                        gridcolor="rgba(255,255,255,.04)",
+                    ),
+                    yaxis=dict(
+                        title="Tahmini Maliyet (TL)",
+                        gridcolor="rgba(255,255,255,.06)",
+                    ),
+                    showlegend=False,
+                )
+                safe_plotly_chart(cost_fig)
+
+                if active_cash_costs:
+                    st.success(
+                        f"Seçili maliyetlere göre en düşük maliyetli aday seviye yaklaşık "
+                        f"**{fmt_tl(best_candidate)}** (maliyet: **{fmt_tl(best_cost)}**)."
+                    )
+                else:
+                    st.info(
+                        "Maliyet kalemi seçilmediği için tüm adayların maliyeti 0 TL'dir."
+                    )
+
+        with service_col:
+            with st.container(border=True):
+                st.subheader("Hizmet Seviyesi Karşılaştırması")
+
+                comparison_rows = []
+                for srv in [90, 95, 98, 99]:
+                    z = {90: 1.28, 95: 1.645, 98: 2.05, 99: 2.33}[srv]
+                    temp_target = demand_needed * (1 + (uncertainty / 100) * z)
+                    temp_refill = max(
+                        0,
+                        temp_target - float(row["Mevcut Nakit"]),
+                    )
+
+                    temp_hold = (
+                        max(0, temp_target - demand_needed)
+                        * holding_rate
+                        / 100
+                        * cash_days
+                        if include_holding
+                        else 0.0
+                    )
+                    temp_stock = (
+                        stock_penalty * ((100 - srv) / 100)
+                        if include_stockout
+                        else 0.0
+                    )
+                    temp_fixed = (
+                        fixed_refill_cost
+                        if include_refill and temp_refill > 0
+                        else 0.0
+                    )
+                    temp_total = temp_hold + temp_stock + temp_fixed
+
+                    comparison_rows.append(
+                        [srv, round(temp_target), round(temp_refill), round(temp_total)]
+                    )
+
+                service_compare = pd.DataFrame(
+                    comparison_rows,
+                    columns=[
+                        "Hizmet %",
+                        "Hedef Nakit",
+                        "İkmal",
+                        "Seçili Toplam Maliyet",
+                    ],
+                )
+
+                st.dataframe(
+                    service_compare,
+                    hide_index=True,
+                    height=230,
+                    column_config={
+                        "Hedef Nakit": st.column_config.NumberColumn(format="₺ %.0f"),
+                        "İkmal": st.column_config.NumberColumn(format="₺ %.0f"),
+                        "Seçili Toplam Maliyet": st.column_config.NumberColumn(format="₺ %.0f"),
+                    },
+                )
+
+                st.info(
+                    "Hizmet seviyesi yükseldikçe güvenlik nakdi artar. "
+                    "R-Q sekmesi ise bu hedefin yanında ikmalin ne zaman ve ne kadar yapılacağını belirler."
+                )
 
 
     # -----------------------------------------------------
-    # NAKİT OPTİMİZASYONU - MALİYET EĞRİSİ
+    # SEKME 4 - MONTE CARLO RİSK ANALİZİ
     # -----------------------------------------------------
+    with tab_monte:
+        st.caption(
+            "R-Q politikasının talep ve lead time belirsizliği altında nasıl davrandığını simülasyonla test eder."
+        )
 
-    st.write("")
+        mc_ctrl1, mc_ctrl2, mc_ctrl3, mc_ctrl4 = st.columns(4)
 
-    curve_col, service_col = st.columns([1.35, 1])
-
-    with curve_col:
-        with st.container(border=True):
-            st.subheader("Hedef Nakit Seviyesine Göre Toplam Maliyet")
-            st.caption(
-                "Fazla nakit taşıma maliyeti ile stokout cezası arasındaki denge."
+        with mc_ctrl1:
+            sim_count = st.selectbox(
+                "Simülasyon Sayısı",
+                [1000, 5000, 10000],
+                index=1,
+                format_func=lambda x: f"{x:,}".replace(",", "."),
+                key="mc_sim_count",
             )
 
-            low_candidate = max(
-                row["Mevcut Nakit"],
-                demand_needed * 0.60,
+        with mc_ctrl2:
+            lead_time_variability = st.slider(
+                "Lead Time Belirsizliği (%)",
+                0,
+                40,
+                20,
+                key="mc_lead_time_variability",
             )
-            high_candidate = target_cash * 1.30
-            candidates = np.linspace(low_candidate, high_candidate, 35)
 
-            candidate_costs = []
-            for candidate in candidates:
-                shortage_ratio = max(
-                    0,
-                    1 - candidate / max(1, demand_needed),
-                )
-                candidate_holding = (
-                    max(0, candidate - demand_needed)
-                    * holding_rate
-                    / 100
-                    * cash_days
-                )
-                candidate_shortage = stock_penalty * shortage_ratio
-                candidate_refill = (
-                    fixed_refill_cost
-                    if candidate > row["Mevcut Nakit"]
-                    else 0
-                )
-                candidate_costs.append(
-                    candidate_holding
-                    + candidate_shortage
-                    + candidate_refill
-                )
-
-            best_idx = int(np.argmin(candidate_costs))
-            best_candidate = candidates[best_idx]
-
-            cost_fig = go.Figure()
-            cost_fig.add_trace(
-                go.Scatter(
-                    x=candidates,
-                    y=candidate_costs,
-                    mode="lines",
-                    line=dict(color="#4d9cff", width=3),
-                    name="Toplam Maliyet",
-                )
+        with mc_ctrl3:
+            demand_bias = st.slider(
+                "Talep Şoku (%)",
+                -20,
+                20,
+                0,
+                key="mc_demand_bias",
+                help="Ortalama talebi yukarı/aşağı kaydırarak yoğun gün veya düşük talep etkisini gösterir.",
             )
-            cost_fig.add_trace(
-                go.Scatter(
-                    x=[best_candidate],
-                    y=[candidate_costs[best_idx]],
-                    mode="markers+text",
-                    text=["Minimum"],
-                    textposition="top center",
-                    marker=dict(size=11, color="#ffbf00"),
-                    name="Minimum",
-                )
+
+        with mc_ctrl4:
+            seed_value = st.number_input(
+                "Rastgelelik Tohumu",
+                min_value=1,
+                max_value=9999,
+                value=42,
+                step=1,
+                key="mc_seed_value",
             )
-            cost_fig.update_layout(
-                height=360,
-                margin=dict(l=10, r=10, t=15, b=10),
-                paper_bgcolor="#0f1d2a",
-                plot_bgcolor="#0f1d2a",
-                font=dict(color="#dbe4ec"),
-                xaxis=dict(
-                    title="Hedef Nakit (TL)",
-                    gridcolor="rgba(255,255,255,.04)",
+
+        sim_button = st.button(
+            "▶ Simülasyonu Çalıştır",
+            key="mc_run_button",
+            type="primary",
+        )
+
+        run_monte_carlo = sim_button or "mc_last_run" not in st.session_state
+        if sim_button:
+            st.session_state["mc_last_run"] = True
+
+        if run_monte_carlo:
+            rng = np.random.default_rng(int(seed_value))
+
+            adjusted_daily_demand = daily_demand * (1 + demand_bias / 100.0)
+            demand_std = max(1.0, adjusted_daily_demand * (uncertainty / 100.0))
+
+            sim_lead_hours = np.maximum(
+                rng.normal(
+                    loc=float(lead_time_hours),
+                    scale=max(0.01, float(lead_time_hours) * lead_time_variability / 100.0),
+                    size=int(sim_count),
                 ),
-                yaxis=dict(
-                    title="Tahmini Maliyet (TL)",
-                    gridcolor="rgba(255,255,255,.06)",
+                0.5,
+            )
+
+            sim_daily_demand = np.maximum(
+                rng.normal(
+                    loc=adjusted_daily_demand,
+                    scale=demand_std,
+                    size=int(sim_count),
                 ),
-                showlegend=False,
+                0.0,
             )
 
-            safe_plotly_chart(
-                cost_fig
+            sim_lead_demand = sim_daily_demand * (sim_lead_hours / 24.0)
+            stockout_before_arrival = sim_lead_demand > reorder_point
+
+            remaining_before_arrival = np.maximum(0.0, reorder_point - sim_lead_demand)
+            cash_after_replenishment = np.minimum(
+                float(atm_capacity),
+                remaining_before_arrival + float(order_quantity),
             )
 
-            st.success(
-                f"Maliyet eğrisine göre aday minimum seviye yaklaşık "
-                f"**{fmt_tl(best_candidate)}**."
+            sim_post_arrival_demand = np.maximum(
+                rng.normal(
+                    loc=adjusted_daily_demand * float(cash_days),
+                    scale=demand_std * math.sqrt(max(float(cash_days), 1.0)),
+                    size=int(sim_count),
+                ),
+                0.0,
             )
 
-    with service_col:
-        with st.container(border=True):
-            st.subheader("Hizmet Seviyesi Karşılaştırması")
+            ending_cash = cash_after_replenishment - sim_post_arrival_demand
+            total_stockout = stockout_before_arrival | (ending_cash < 0)
 
-            comparison_rows = []
-            for srv in [90, 95, 98, 99]:
-                z = {90: 1.28, 95: 1.645, 98: 2.05, 99: 2.33}[srv]
-                temp_target = demand_needed * (
-                    1 + (uncertainty / 100) * z
-                )
-                temp_refill = max(
-                    0,
-                    temp_target - row["Mevcut Nakit"],
-                )
-                temp_hold = (
-                    max(0, temp_target - demand_needed)
-                    * holding_rate
-                    / 100
-                    * cash_days
-                )
-                temp_stock = stock_penalty * ((100 - srv) / 100)
-                temp_total = (
-                    temp_hold
-                    + temp_stock
-                    + (fixed_refill_cost if temp_refill > 0 else 0)
-                )
-                comparison_rows.append(
-                    [
-                        srv,
-                        round(temp_target),
-                        round(temp_refill),
-                        round(temp_total),
+            holding_component = np.maximum(ending_cash, 0.0) * (holding_rate / 100.0) * float(cash_days)
+            stockout_component = np.where(
+                total_stockout,
+                float(stock_penalty) * (1 + np.maximum(-ending_cash, 0.0) / max(adjusted_daily_demand, 1.0)),
+                0.0,
+            )
+            refill_component = np.full(int(sim_count), float(fixed_refill_cost))
+            total_costs = holding_component + stockout_component + refill_component
+
+            stockout_prob = float(total_stockout.mean() * 100.0)
+            avg_total_cost = float(total_costs.mean())
+            safe_cash_need = float(np.quantile(cash_after_replenishment, cash_service / 100.0))
+            avg_order_cycle = float(order_quantity / max(adjusted_daily_demand, 1.0))
+            avg_order_per_month = float((30.0 * adjusted_daily_demand) / max(order_quantity, 1.0)) if order_quantity > 0 else 0.0
+
+            k1, k2, k3, k4, k5 = st.columns(5)
+            k1.metric("Nakitsiz Kalma Olasılığı", f"%{stockout_prob:.1f}")
+            k2.metric("Ortalama Toplam Maliyet", fmt_tl(avg_total_cost))
+            k3.metric(f"%{cash_service} Güvenli Nakit İhtiyacı", fmt_tl(safe_cash_need))
+            k4.metric("Ortalama İkmal Sıklığı", f"{avg_order_per_month:.1f} / ay")
+            k5.metric("Önerilen Q ile Çevrim Süresi", f"{avg_order_cycle:.1f} gün")
+
+            st.write("")
+            mc_left, mc_right = st.columns([1.2, 1])
+
+            with mc_left:
+                with st.container(border=True):
+                    st.subheader("Gün Sonu Kalan Nakit Dağılımı")
+                    st.caption("Simülasyonların planlama ufku sonundaki kalan nakit dağılımı")
+
+                    hist_cash = go.Figure()
+                    hist_cash.add_trace(
+                        go.Histogram(
+                            x=ending_cash,
+                            nbinsx=28,
+                            marker=dict(color="#4d9cff"),
+                            name="Kalan nakit",
+                        )
+                    )
+                    hist_cash.add_vline(
+                        x=0,
+                        line_dash="dash",
+                        line_color="#ff4e57",
+                        annotation_text="0 (Nakitsiz Kalma)",
+                        annotation_position="top left",
+                    )
+                    hist_cash.update_layout(
+                        height=360,
+                        margin=dict(l=10, r=10, t=15, b=10),
+                        paper_bgcolor="#0f1d2a",
+                        plot_bgcolor="#0f1d2a",
+                        font=dict(color="#dbe4ec"),
+                        xaxis=dict(title="Kalan Nakit (TL)", gridcolor="rgba(255,255,255,.04)"),
+                        yaxis=dict(title="Frekans", gridcolor="rgba(255,255,255,.06)"),
+                        showlegend=False,
+                    )
+                    safe_plotly_chart(hist_cash)
+
+            with mc_right:
+                with st.container(border=True):
+                    st.subheader("Toplam Maliyet Dağılımı")
+                    st.caption("Simülasyonlarda oluşan toplam maliyet dağılımı")
+
+                    hist_cost = go.Figure()
+                    hist_cost.add_trace(
+                        go.Histogram(
+                            x=total_costs,
+                            nbinsx=28,
+                            marker=dict(color="#8f75ff"),
+                            name="Toplam maliyet",
+                        )
+                    )
+                    hist_cost.add_vline(
+                        x=avg_total_cost,
+                        line_dash="dash",
+                        line_color="#ffbf00",
+                        annotation_text=f"Ortalama: {fmt_tl(avg_total_cost)}",
+                        annotation_position="top right",
+                    )
+                    hist_cost.update_layout(
+                        height=360,
+                        margin=dict(l=10, r=10, t=15, b=10),
+                        paper_bgcolor="#0f1d2a",
+                        plot_bgcolor="#0f1d2a",
+                        font=dict(color="#dbe4ec"),
+                        xaxis=dict(title="Toplam Maliyet (TL)", gridcolor="rgba(255,255,255,.04)"),
+                        yaxis=dict(title="Frekans", gridcolor="rgba(255,255,255,.06)"),
+                        showlegend=False,
+                    )
+                    safe_plotly_chart(hist_cost)
+
+            st.write("")
+            line_col, table_col = st.columns([1.15, 1])
+
+            with line_col:
+                with st.container(border=True):
+                    st.subheader("R Değeri Senaryo Analizi")
+                    st.caption("Farklı R seviyeleri için stokout olasılığı ve maliyet karşılaştırması")
+
+                    r_candidates = [
+                        float(reorder_point),
+                        float(reorder_point) * 1.05,
+                        float(reorder_point) * 1.10,
+                        float(reorder_point) * 1.20,
+                        float(reorder_point) * 1.30,
                     ]
+
+                    scenario_rows = []
+                    for r_value in r_candidates:
+                        sim_stockout = sim_lead_demand > r_value
+                        sim_remaining = np.maximum(0.0, r_value - sim_lead_demand)
+                        sim_cash_after = np.minimum(float(atm_capacity), sim_remaining + float(order_quantity))
+                        sim_end = sim_cash_after - sim_post_arrival_demand
+                        sim_total_stockout = sim_stockout | (sim_end < 0)
+
+                        sim_holding = np.maximum(sim_end, 0.0) * (holding_rate / 100.0) * float(cash_days)
+                        sim_penalty = np.where(
+                            sim_total_stockout,
+                            float(stock_penalty) * (1 + np.maximum(-sim_end, 0.0) / max(adjusted_daily_demand, 1.0)),
+                            0.0,
+                        )
+                        sim_total_cost = sim_holding + sim_penalty + refill_component
+
+                        scenario_rows.append(
+                            [
+                                round(r_value),
+                                round(float(sim_total_stockout.mean() * 100.0), 1),
+                                round(float(sim_total_cost.mean()), 0),
+                                round(float(np.quantile(sim_cash_after, cash_service / 100.0)), 0),
+                            ]
+                        )
+
+                    scenario_df = pd.DataFrame(
+                        scenario_rows,
+                        columns=[
+                            "R Değeri",
+                            "Stockout Olasılığı %",
+                            "Ortalama Toplam Maliyet",
+                            f"%{cash_service} Güvenli Nakit",
+                        ],
+                    )
+
+                    scenario_fig = go.Figure()
+                    scenario_fig.add_trace(
+                        go.Scatter(
+                            x=scenario_df["R Değeri"],
+                            y=scenario_df["Stockout Olasılığı %"],
+                            mode="lines+markers",
+                            line=dict(color="#ff7a59", width=3),
+                            marker=dict(size=8),
+                            name="Stockout Olasılığı",
+                        )
+                    )
+                    scenario_fig.update_layout(
+                        height=320,
+                        margin=dict(l=10, r=10, t=15, b=10),
+                        paper_bgcolor="#0f1d2a",
+                        plot_bgcolor="#0f1d2a",
+                        font=dict(color="#dbe4ec"),
+                        xaxis=dict(title="R Değeri (TL)", gridcolor="rgba(255,255,255,.04)"),
+                        yaxis=dict(title="Stockout Olasılığı (%)", gridcolor="rgba(255,255,255,.06)"),
+                        showlegend=False,
+                    )
+                    safe_plotly_chart(scenario_fig)
+
+            with table_col:
+                with st.container(border=True):
+                    st.subheader("R Önerisi")
+
+                    st.dataframe(
+                        scenario_df,
+                        hide_index=True,
+                        height=250,
+                        column_config={
+                            "R Değeri": st.column_config.NumberColumn(format="₺ %.0f"),
+                            "Ortalama Toplam Maliyet": st.column_config.NumberColumn(format="₺ %.0f"),
+                            f"%{cash_service} Güvenli Nakit": st.column_config.NumberColumn(format="₺ %.0f"),
+                        },
+                    )
+
+                    target_stockout_limit = max(1.0, 100.0 - float(cash_service))
+                    feasible_rows = scenario_df[scenario_df["Stockout Olasılığı %"] <= target_stockout_limit]
+
+                    if not feasible_rows.empty:
+                        recommended_r = float(feasible_rows.iloc[0]["R Değeri"])
+                        improvement = max(0.0, stockout_prob - float(feasible_rows.iloc[0]["Stockout Olasılığı %"]))
+                        st.success(
+                            f"Öneri: Stockout olasılığını **%{target_stockout_limit:.0f}** altına indirmek için "
+                            f"R değerinin en az **{fmt_tl(recommended_r)}** olması önerilir. "
+                            f"Tahmini iyileşme: **%{improvement:.1f} puan**."
+                        )
+                    else:
+                        st.warning(
+                            "Seçilen senaryolarda hedef hizmet seviyesini sağlayan bir R değeri oluşmadı. "
+                            "Belirsizliği azaltmak, Q'yu artırmak veya hizmet seviyesini yeniden değerlendirmek gerekebilir."
+                        )
+
+                    st.info(
+                        f"Bu analizde talep ortalaması **{fmt_tl(adjusted_daily_demand)}**, lead time ortalaması **{lead_time_hours:.1f} saat**, "
+                        f"talep belirsizliği **%{uncertainty}**, lead time belirsizliği ise **%{lead_time_variability}** kabul edilmiştir."
+                    )
+
+            with st.container(border=True):
+                st.subheader("Simülasyon Varsayımları")
+                s1, s2, s3, s4 = st.columns(4)
+                s1.metric("Talep Dağılımı", "Normal (μ, σ)")
+                s2.metric("Lead Time", f"{lead_time_hours:.1f} saat")
+                s3.metric("Hedef Hizmet", f"%{cash_service} (z={z_value})")
+                s4.metric("Politika", "(Q, R)")
+
+                st.caption(
+                    "Not: Bu Monte Carlo bölümü prototip amaçlıdır. Gerçek banka verisi gelirse talep ve lead time dağılımları "
+                    "geçmiş operasyon verisinden fit edilerek çok daha gerçekçi sonuçlar üretilebilir."
                 )
-
-            service_compare = pd.DataFrame(
-                comparison_rows,
-                columns=[
-                    "Hizmet %",
-                    "Hedef Nakit",
-                    "İkmal",
-                    "Toplam Maliyet",
-                ],
-            )
-
-            st.dataframe(
-                service_compare,
-                hide_index=True,
-                height=230,
-                column_config={
-                    "Hedef Nakit": st.column_config.NumberColumn(format="₺ %.0f"),
-                    "İkmal": st.column_config.NumberColumn(format="₺ %.0f"),
-                    "Toplam Maliyet": st.column_config.NumberColumn(format="₺ %.0f"),
-                },
-            )
-
-            st.info(
-                "Yüksek hizmet seviyesi stokout riskini düşürür; ancak hedef nakit ve taşıma maliyetini artırır."
-            )
 
 
 # =========================================================
@@ -2933,7 +3822,9 @@ elif page == "Nakit Optimizasyonu":
 
 elif page == "Rota Planlama":
     st.info(
-        "İki ATM seçerek aralarındaki mesafe, tahmini karayolu mesafesi, süre ve operasyon maliyetini karşılaştır."
+        "Başlangıç ve varış ATM'sini listeden veya haritadaki ATM noktalarından seç. "
+        "Mesafe artık kuş uçuşu değildir: OSRM, OpenStreetMap yol ağı üzerinde otomobilin "
+        "izleyeceği sürüş rotasını döndürür; km ve süre doğrudan bu rotadan hesaplanır."
     )
 
     f1, f2, f3 = st.columns([.8, 1.4, 1.4])
@@ -2942,6 +3833,7 @@ elif page == "Rota Planlama":
         route_city = st.selectbox(
             "Ekip / İl",
             ["Tüm Bölge", "Trabzon", "Rize", "Ordu", "Giresun", "Artvin"],
+            key="route_city_osm",
         )
 
     if route_city == "Tüm Bölge":
@@ -2955,318 +3847,532 @@ elif page == "Rota Planlama":
     ]
 
     atm_codes = route_df["ATM Kodu"].tolist()
+    label_by_code = dict(zip(atm_codes, atm_labels))
+
+    if (
+        "route_from_osm" not in st.session_state
+        or st.session_state["route_from_osm"] not in atm_labels
+    ):
+        st.session_state["route_from_osm"] = atm_labels[0]
+
+    if (
+        "route_to_osm" not in st.session_state
+        or st.session_state["route_to_osm"] not in atm_labels
+    ):
+        st.session_state["route_to_osm"] = (
+            atm_labels[1] if len(atm_labels) > 1 else atm_labels[0]
+        )
 
     with f2:
         from_label = st.selectbox(
             "Başlangıç Noktası",
             atm_labels,
-            index=0,
+            key="route_from_osm",
         )
 
     with f3:
         to_label = st.selectbox(
             "Varış Noktası",
             atm_labels,
-            index=1 if len(atm_labels) > 1 else 0,
+            key="route_to_osm",
         )
+
+    with st.expander("💰 Rota Maliyet Kalemlerini Seç", expanded=True):
+        st.caption(
+            "Toplam rota maliyeti yalnızca açık olan kalemlerden oluşur. "
+            "Böylece yol, işçilik ve ATM ikmal/durak maliyetlerini ayrı ayrı test edebilirsin."
+        )
+
+        rc1, rc2, rc3 = st.columns(3)
+
+        with rc1:
+            include_route_road = st.toggle(
+                "Yol / araç işletme maliyeti",
+                value=True,
+                key="route_include_road",
+            )
+            road_cost_per_km = st.number_input(
+                "Yol / araç işletme (TL/km)",
+                min_value=0.0,
+                max_value=250.0,
+                value=22.0,
+                step=1.0,
+                key="route_road_cost_per_km",
+                disabled=not include_route_road,
+                help="Yakıt, bakım, amortisman ve araç kullanımına bağlı km bazlı temsili gider.",
+            )
+
+        with rc2:
+            include_route_labor = st.toggle(
+                "İşçilik maliyeti",
+                value=True,
+                key="route_include_labor",
+            )
+            hourly_worker_cost = st.number_input(
+                "İşçilik (TL/saat/çalışan)",
+                min_value=0.0,
+                max_value=5000.0,
+                value=350.0,
+                step=25.0,
+                key="route_hourly_worker_cost",
+                disabled=not include_route_labor,
+            )
+            crew_size = st.number_input(
+                "Araçtaki ekip büyüklüğü",
+                min_value=1,
+                max_value=8,
+                value=2,
+                step=1,
+                key="route_crew_size",
+                disabled=not include_route_labor,
+            )
+
+        with rc3:
+            include_route_fixed = st.toggle(
+                "ATM ikmal / durak sabit maliyeti",
+                value=True,
+                key="route_include_fixed",
+            )
+            fixed_stop_cost = st.number_input(
+                "ATM başına sabit maliyet (TL)",
+                min_value=0.0,
+                max_value=25000.0,
+                value=450.0,
+                step=50.0,
+                key="route_fixed_stop_cost",
+                disabled=not include_route_fixed,
+            )
+            service_minutes_per_stop = st.number_input(
+                "ATM başına işlem süresi (dk)",
+                min_value=0,
+                max_value=180,
+                value=20,
+                step=5,
+                key="route_service_minutes",
+                help="İşçilik seçiliyse, ATM'deki ikmal/servis süresi toplam çalışma süresine eklenir.",
+            )
+
+        active_route_costs = []
+        if include_route_road:
+            active_route_costs.append("Yol / araç")
+        if include_route_labor:
+            active_route_costs.append("İşçilik")
+        if include_route_fixed:
+            active_route_costs.append("ATM sabit işlem")
+
+        if active_route_costs:
+            st.success("Toplama dahil: " + " · ".join(active_route_costs))
+        else:
+            st.warning("Hiçbir maliyet kalemi seçili değil; rota ve süre hesaplanır ancak maliyet 0 TL olur.")
 
     from_code = atm_codes[atm_labels.index(from_label)]
     to_code = atm_codes[atm_labels.index(to_label)]
 
-    from_row = route_df[
-        route_df["ATM Kodu"] == from_code
-    ].iloc[0]
-
-    to_row = route_df[
-        route_df["ATM Kodu"] == to_code
-    ].iloc[0]
+    from_row = route_df[route_df["ATM Kodu"] == from_code].iloc[0]
+    to_row = route_df[route_df["ATM Kodu"] == to_code].iloc[0]
 
     if from_code == to_code:
-        st.warning(
-            "Başlangıç ve varış için farklı iki ATM seç."
-        )
+        st.warning("Başlangıç ve varış için farklı iki ATM seç.")
     else:
-        air_distance = haversine(
-            from_row["Lat"],
-            from_row["Lon"],
-            to_row["Lat"],
-            to_row["Lon"],
-        )
-
-        road_factor = (
-            1.22
-            if from_row["İl"] == to_row["İl"]
-            else 1.28
-        )
-
-        road_distance = air_distance * road_factor
-
-        travel_minutes = (
-            road_distance / 52 * 60 + 24
-        )
-
-        route_cost = (
-            road_distance * 32 + 850
-        )
-
-        left, right = st.columns([1.55, 1])
-
-        with left:
-            with st.container(border=True):
-                st.subheader("Seçili Rota")
-
-                fig = map_fig(
-                    route_df,
-                    height=500,
-                    selected_codes=[from_code, to_code],
-                    line_points=[
-                        (from_row["Lat"], from_row["Lon"]),
-                        (to_row["Lat"], to_row["Lon"]),
-                    ],
-                )
-
-                safe_plotly_chart(
-                    fig
-                )
-
-        with right:
-            with st.container(border=True):
-                st.subheader("Rota Özeti")
-
-                st.markdown(
-                    f"**{from_code} → {to_code}**\n\n"
-                    f"{from_row['İl']} / {from_row['İlçe']} → "
-                    f"{to_row['İl']} / {to_row['İlçe']}"
-                )
-
-                a, b = st.columns(2)
-
-                metric_card(a, 
-                    "Kuş Uçuşu",
-                    f"{air_distance:.1f} km".replace(".", ","),
-                )
-
-                metric_card(b, 
-                    "Tahmini Yol",
-                    f"{road_distance:.1f} km".replace(".", ","),
-                )
-
-                metric_card(a, 
-                    "Tahmini Süre",
-                    f"{travel_minutes:.0f} dk",
-                )
-
-                metric_card(b, 
-                    "Tahmini Maliyet",
-                    fmt_tl(route_cost),
-                )
-
-                if from_row["İl"] == to_row["İl"]:
-                    st.success(
-                        "İki nokta aynı il ekibinde. Tek araçla ardışık ikmal planı uygulanabilir."
-                    )
-                else:
-                    st.warning(
-                        "İller arası rota seçildi. Ekip sınırı nedeniyle ortak araç veya devir noktası değerlendirilmeli."
-                    )
-
-                st.caption(
-                    "Tahmini yol mesafesi gerçek navigasyon servisi değildir. "
-                    "Kuş uçuşu mesafesine bölgesel karayolu katsayısı uygulanmıştır."
-                )
-
-
-        # -------------------------------------------------
-        # ROTA PLANLAMA - MESAFE MATRİSİ / YAKIN KOMŞULAR
-        # -------------------------------------------------
-
-        st.write("")
-
-        matrix_col, nearest_col = st.columns([1.35, 1])
-
-        with matrix_col:
-            with st.container(border=True):
-                st.subheader("Seçili Ekip İçin ATM Mesafe Matrisi")
-                st.caption(
-                    "Kuş uçuşu mesafeleridir; karayolu planında ayrıca yol katsayısı uygulanır."
-                )
-
-                matrix_source = route_df.head(8).copy()
-                codes = matrix_source["ATM Kodu"].tolist()
-                matrix = pd.DataFrame(index=codes, columns=codes, dtype=float)
-
-                for _, ra in matrix_source.iterrows():
-                    for _, rb in matrix_source.iterrows():
-                        matrix.loc[ra["ATM Kodu"], rb["ATM Kodu"]] = round(
-                            haversine(
-                                ra["Lat"],
-                                ra["Lon"],
-                                rb["Lat"],
-                                rb["Lon"],
-                            ),
-                            1,
-                        )
-
-                matrix_fig = go.Figure(
-                    data=go.Heatmap(
-                        z=matrix.values,
-                        x=matrix.columns,
-                        y=matrix.index,
-                        colorscale=[
-                            [0, "#102130"],
-                            [0.5, "#4d9cff"],
-                            [1, "#ffbf00"],
-                        ],
-                        colorbar=dict(title="km"),
-                    )
-                )
-                matrix_fig.update_layout(
-                    height=390,
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    paper_bgcolor="#0f1d2a",
-                    plot_bgcolor="#0f1d2a",
-                    font=dict(color="#dbe4ec", size=9),
-                )
-                safe_plotly_chart(
-                    matrix_fig
-                )
-
-        with nearest_col:
-            with st.container(border=True):
-                st.subheader("Başlangıç ATM'sine En Yakın Noktalar")
-
-                nearest_rows = []
-                for _, candidate in route_df.iterrows():
-                    if candidate["ATM Kodu"] == from_code:
-                        continue
-
-                    direct = haversine(
-                        from_row["Lat"],
-                        from_row["Lon"],
-                        candidate["Lat"],
-                        candidate["Lon"],
-                    )
-                    factor_local = (
-                        1.22
-                        if from_row["İl"] == candidate["İl"]
-                        else 1.28
-                    )
-                    road_est = direct * factor_local
-                    nearest_rows.append(
-                        [
-                            candidate["ATM Kodu"],
-                            candidate["İlçe"],
-                            round(road_est, 1),
-                            round(road_est / 52 * 60 + 12),
-                        ]
-                    )
-
-                nearest_df = pd.DataFrame(
-                    nearest_rows,
-                    columns=["ATM", "İlçe", "Tahmini Yol km", "Süre dk"],
-                ).sort_values("Tahmini Yol km").head(6)
-
-                st.dataframe(
-                    nearest_df,
-                    hide_index=True,
-                    height=265,
-                )
-
-                if len(nearest_df) > 0:
-                    nearest = nearest_df.iloc[0]
-                    st.success(
-                        f"{from_code} için en yakın sonraki durak "
-                        f"**{nearest['ATM']}** (~{nearest['Tahmini Yol km']} km)."
-                    )
-
-
-        st.write("")
-
-        with st.container(border=True):
-            st.subheader("Önerilen Ardışık İkmal Sırası")
-            st.caption(
-                "Seçili ekipte başlangıç ATM'sinden en yakın komşu mantığıyla üretilmiş basit rota önerisi."
+        with st.spinner("OpenStreetMap / OSRM üzerinden gerçek sürüş rotası hesaplanıyor..."):
+            road_route = osrm_route(
+                from_row["Lat"],
+                from_row["Lon"],
+                to_row["Lat"],
+                to_row["Lon"],
             )
 
-            sequence_source = route_df.copy().reset_index(drop=True)
-            if len(sequence_source) >= 2:
-                start_code = from_code
-                remaining = sequence_source[
-                    sequence_source["ATM Kodu"] != start_code
-                ].copy()
-                current = sequence_source[
-                    sequence_source["ATM Kodu"] == start_code
-                ].iloc[0]
+        if road_route is None:
+            st.error(
+                "OpenStreetMap / OSRM rota servisine şu anda ulaşılamadı. "
+                "İnternet bağlantısını kontrol edip tekrar deneyebilirsin."
+            )
+        else:
+            road_distance = road_route["distance_km"]
+            driving_minutes = road_route["duration_min"]
 
-                sequence = [start_code]
-                cumulative_km = 0.0
-                sequence_rows = []
+            point_costs = route_cost_breakdown(
+                road_distance_km=road_distance,
+                driving_minutes=driving_minutes,
+                road_cost_per_km=road_cost_per_km,
+                hourly_worker_cost=hourly_worker_cost,
+                crew_size=crew_size,
+                service_minutes=service_minutes_per_stop,
+                fixed_stop_cost=fixed_stop_cost,
+                service_stop_count=1,
+                include_road=include_route_road,
+                include_labor=include_route_labor,
+                include_fixed_stop=include_route_fixed,
+            )
 
-                while len(remaining) > 0:
-                    options = []
-                    for idx, candidate in remaining.iterrows():
-                        direct = haversine(
-                            current["Lat"],
-                            current["Lon"],
-                            candidate["Lat"],
-                            candidate["Lon"],
-                        )
-                        factor_local = (
-                            1.22
-                            if current["İl"] == candidate["İl"]
-                            else 1.28
-                        )
-                        road_est = direct * factor_local
-                        options.append((road_est, idx, candidate))
+            left, right = st.columns([1.55, 1])
 
-                    options.sort(key=lambda x: x[0])
-                    road_est, idx, nxt = options[0]
-                    cumulative_km += road_est
-
-                    sequence_rows.append(
-                        {
-                            "Sıra": len(sequence) + 1,
-                            "ATM": nxt["ATM Kodu"],
-                            "İl": nxt["İl"],
-                            "İlçe": nxt["İlçe"],
-                            "Bir Önceki Duraktan km": round(road_est, 1),
-                            "Kümülatif km": round(cumulative_km, 1),
-                            "Kritiklik": nxt["Kritiklik"],
-                        }
-                    )
-
-                    sequence.append(nxt["ATM Kodu"])
-                    current = nxt
-                    remaining = remaining.drop(index=idx)
-
-                sequence_df = pd.DataFrame(sequence_rows)
-
-                route_seq_cols = st.columns([1.5, 1])
-
-                with route_seq_cols[0]:
-                    st.dataframe(
-                        sequence_df,
-                        hide_index=True,
-                        width="stretch",
-                        height=275,
-                    )
-
-                with route_seq_cols[1]:
-                    metric_card(st, 
-                        "Önerilen Tur Uzunluğu",
-                        f"{cumulative_km:.1f} km".replace(".", ","),
-                    )
-                    metric_card(st, 
-                        "Yaklaşık Tur Süresi",
-                        f"{(cumulative_km / 48 * 60 + 12 * len(sequence_df)):.0f} dk",
-                    )
-                    metric_card(st, 
-                        "Yaklaşık Tur Maliyeti",
-                        fmt_tl(cumulative_km * 32 + 850),
-                    )
+            with left:
+                with st.container(border=True):
+                    st.subheader("Gerçek OSM Karayolu Rotası")
                     st.caption(
-                        "Bu bölüm optimizasyonun ilk prototipidir; en yakın komşu sezgiseli kullanılmıştır."
+                        "Sarı çizgi, OSRM'nin OpenStreetMap yol ağı üzerinde döndürdüğü "
+                        "otomobil sürüş geometrisidir; düz çizgi/kuş uçuşu kullanılmaz."
                     )
+
+                    fig = map_fig(
+                        route_df,
+                        height=500,
+                        selected_codes=[from_code, to_code],
+                        line_points=road_route["geometry"],
+                    )
+
+                    map_event = st.plotly_chart(
+                        fig,
+                        use_container_width=True,
+                        key="route_interactive_osm_map",
+                        on_select="rerun",
+                        selection_mode="points",
+                        config={
+                            "displayModeBar": False,
+                            "responsive": True,
+                            "scrollZoom": True,
+                        },
+                    )
+
+                    st.caption(
+                        "Kaynak: OpenStreetMap yol verisi + OSRM yönlendirme. "
+                        "Bu prototip anlık trafik ve canlı yol kapanmalarını içermez."
+                    )
+
+                    selected_map_code = None
+
+                    try:
+                        selection = map_event.get("selection", {})
+                        selected_points = selection.get("points", [])
+                    except Exception:
+                        try:
+                            selected_points = map_event.selection.points
+                        except Exception:
+                            selected_points = []
+
+                    if selected_points:
+                        last_point = selected_points[-1]
+
+                        try:
+                            customdata = last_point.get("customdata", [])
+                        except Exception:
+                            customdata = getattr(last_point, "customdata", [])
+
+                        if customdata:
+                            selected_map_code = customdata[0]
+
+                    if selected_map_code is not None and selected_map_code in label_by_code:
+                        st.markdown(f"**Haritada seçilen ATM:** `{selected_map_code}`")
+
+                        map_pick_left, map_pick_right = st.columns(2)
+
+                        with map_pick_left:
+                            if st.button(
+                                "📍 Başlangıç yap",
+                                key="route_map_set_start",
+                                width="stretch",
+                            ):
+                                st.session_state["route_from_osm"] = label_by_code[selected_map_code]
+                                st.rerun()
+
+                        with map_pick_right:
+                            if st.button(
+                                "🏁 Varış yap",
+                                key="route_map_set_end",
+                                width="stretch",
+                            ):
+                                st.session_state["route_to_osm"] = label_by_code[selected_map_code]
+                                st.rerun()
+
+            with right:
+                with st.container(border=True):
+                    st.subheader("Rota Özeti")
+
+                    st.markdown(
+                        f"**{from_code} → {to_code}**\n\n"
+                        f"{from_row['İl']} / {from_row['İlçe']} → "
+                        f"{to_row['İl']} / {to_row['İlçe']}"
+                    )
+
+                    a, b = st.columns(2)
+                    a.metric(
+                        "Karayolu Mesafesi",
+                        f"{road_distance:.1f} km".replace(".", ","),
+                    )
+                    b.metric("Sürüş Süresi", f"{driving_minutes:.0f} dk")
+
+                    st.metric(
+                        "Operasyon Süresi",
+                        f"{point_costs['operation_minutes']:.0f} dk",
+                        help="Sürüş + ATM işlem süresi",
+                    )
+
+                    st.divider()
+                    st.metric("Seçili Toplam Rota Maliyeti", fmt_tl(point_costs["total_cost"]))
+
+                    if from_row["İl"] == to_row["İl"]:
+                        st.success(
+                            "İki nokta aynı il ekibinde. Tek ekipli ardışık ikmal planı uygundur."
+                        )
+                    else:
+                        st.warning(
+                            "İller arası rota seçildi. Ekip sınırı ve görev devri ayrıca değerlendirilmelidir."
+                        )
+
+            st.write("")
+
+            # -------------------------------------------------
+            # SEÇİLİ ROTA MALİYETLERİ
+            # -------------------------------------------------
+
+            with st.container(border=True):
+                st.subheader("Seçili Rota Maliyetleri")
+                st.caption(
+                    "Grafik ve toplam yalnızca üst bölümde aktif ettiğin maliyet kalemlerinden oluşur."
+                )
+
+                cost_rows = []
+                if include_route_road:
+                    cost_rows.append(["Yol / Araç İşletme", point_costs["road_cost"]])
+                if include_route_labor:
+                    cost_rows.append(["İşçilik", point_costs["labor_cost"]])
+                if include_route_fixed:
+                    cost_rows.append(["ATM Sabit İşlem", point_costs["fixed_service_cost"]])
+
+                if cost_rows:
+                    route_cost_df = pd.DataFrame(cost_rows, columns=["Kalem", "Tutar"])
+
+                    cost_fig = px.bar(
+                        route_cost_df,
+                        x="Kalem",
+                        y="Tutar",
+                        text_auto=".0f",
+                    )
+                    cost_fig.update_layout(
+                        height=300,
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        paper_bgcolor="#0f1d2a",
+                        plot_bgcolor="#0f1d2a",
+                        font=dict(color="#dbe4ec"),
+                        xaxis=dict(showgrid=False, type="category"),
+                        yaxis=dict(title="TL", gridcolor="rgba(255,255,255,.06)"),
+                        showlegend=False,
+                    )
+                    safe_plotly_chart(cost_fig)
+
+                    m1, m2, m3, m4 = st.columns(4)
+                    m1.metric("Yol", fmt_tl(point_costs["road_cost"]) if include_route_road else "—")
+                    m2.metric("İşçilik", fmt_tl(point_costs["labor_cost"]) if include_route_labor else "—")
+                    m3.metric("ATM İşlem", fmt_tl(point_costs["fixed_service_cost"]) if include_route_fixed else "—")
+                    m4.metric("Toplam", fmt_tl(point_costs["total_cost"]))
+                else:
+                    st.info("Maliyet kalemi seçilmedi.")
+
+            # -------------------------------------------------
+            # OSM SÜRÜŞ MESAFESİ MATRİSİ / YAKIN NOKTALAR
+            # -------------------------------------------------
+
+            st.write("")
+            matrix_col, nearest_col = st.columns([1.35, 1])
+            matrix_source = route_df.head(8).copy().reset_index(drop=True)
+
+            coords_tuple = tuple(
+                (float(row["Lat"]), float(row["Lon"]))
+                for _, row in matrix_source.iterrows()
+            )
+
+            with st.spinner("OSM sürüş mesafesi matrisi hazırlanıyor..."):
+                road_table = osrm_table(coords_tuple)
+
+            with matrix_col:
+                with st.container(border=True):
+                    st.subheader("Karayolu Sürüş Mesafesi Matrisi")
+                    st.caption(
+                        "Matristeki değerler iki koordinat arasındaki düz mesafe değil; "
+                        "OSRM'nin en hızlı otomobil rotalarının yol uzunluklarıdır."
+                    )
+
+                    if road_table is None:
+                        st.warning("OSM/OSRM mesafe matrisi şu anda alınamadı.")
+                    else:
+                        codes = matrix_source["ATM Kodu"].tolist()
+                        matrix = pd.DataFrame(
+                            road_table["distances_km"],
+                            index=codes,
+                            columns=codes,
+                            dtype=float,
+                        )
+
+                        matrix_fig = go.Figure(
+                            data=go.Heatmap(
+                                z=matrix.values,
+                                x=matrix.columns,
+                                y=matrix.index,
+                                colorscale=[
+                                    [0, "#102130"],
+                                    [0.5, "#4d9cff"],
+                                    [1, "#ffbf00"],
+                                ],
+                                colorbar=dict(title="km"),
+                                hovertemplate="%{y} → %{x}<br>%{z:.1f} km<extra></extra>",
+                            )
+                        )
+                        matrix_fig.update_layout(
+                            height=390,
+                            margin=dict(l=10, r=10, t=10, b=10),
+                            paper_bgcolor="#0f1d2a",
+                            plot_bgcolor="#0f1d2a",
+                            font=dict(color="#dbe4ec", size=9),
+                        )
+                        safe_plotly_chart(matrix_fig)
+
+            with nearest_col:
+                with st.container(border=True):
+                    st.subheader("Başlangıç ATM'sine En Yakın Noktalar")
+                    st.caption("OSM otomobil sürüş mesafesine göre sıralanır.")
+
+                    if road_table is None:
+                        st.warning("Mesafe matrisi alınamadığı için yakın nokta sıralaması oluşturulamadı.")
+                    else:
+                        codes = matrix_source["ATM Kodu"].tolist()
+                        from_index = codes.index(from_code) if from_code in codes else 0
+                        nearest_rows = []
+
+                        for candidate_index, candidate in matrix_source.iterrows():
+                            if candidate_index == from_index:
+                                continue
+
+                            km = road_table["distances_km"][from_index][candidate_index]
+                            duration = road_table["durations_min"][from_index][candidate_index]
+
+                            if km is None:
+                                continue
+
+                            nearest_rows.append(
+                                {
+                                    "ATM": candidate["ATM Kodu"],
+                                    "İl": candidate["İl"],
+                                    "İlçe": candidate["İlçe"],
+                                    "OSM Yol km": round(km, 1),
+                                    "Sürüş dk": None if duration is None else round(duration),
+                                }
+                            )
+
+                        nearest_df = pd.DataFrame(nearest_rows)
+
+                        if not nearest_df.empty:
+                            nearest_df = nearest_df.sort_values("OSM Yol km").head(6)
+                            st.dataframe(nearest_df, hide_index=True, height=265)
+                            nearest = nearest_df.iloc[0]
+                            st.success(
+                                f"{from_code} için OSM yol ağına göre en yakın sonraki durak "
+                                f"**{nearest['ATM']}** (~{nearest['OSM Yol km']} km)."
+                            )
+                        else:
+                            st.info("Karşılaştırılabilecek başka ATM bulunamadı.")
+
+            # -------------------------------------------------
+            # OSM MATRİSİYLE ARDIŞIK İKMAL SIRASI
+            # -------------------------------------------------
+
+            st.write("")
+
+            with st.container(border=True):
+                st.subheader("Önerilen Ardışık İkmal Sırası")
+                st.caption(
+                    "Seçili ekipteki ATM'ler, OSM sürüş mesafesi matrisi üzerinde "
+                    "en yakın komşu sezgiseliyle sıralanır. Tur maliyeti de seçili maliyet "
+                    "kalemleriyle yeniden hesaplanır."
+                )
+
+                return_to_start = st.toggle(
+                    "Tur sonunda başlangıç ATM'sine dön",
+                    value=True,
+                    key="route_return_to_start",
+                )
+
+                if road_table is None:
+                    st.warning("OSM sürüş matrisi alınamadığı için tur sırası hesaplanamadı.")
+                elif len(matrix_source) < 2:
+                    st.info("Tur oluşturmak için en az iki ATM gerekir.")
+                else:
+                    codes = matrix_source["ATM Kodu"].tolist()
+                    start_index = codes.index(from_code) if from_code in codes else 0
+
+                    order, legs = nearest_neighbor_order(
+                        road_table["distances_km"],
+                        start_index=start_index,
+                        return_to_start=return_to_start,
+                    )
+
+                    sequence_rows = []
+                    cumulative_km = 0.0
+                    cumulative_drive_min = 0.0
+
+                    for leg_no, (i, j, leg_km) in enumerate(legs, start=1):
+                        leg_duration = road_table["durations_min"][i][j]
+                        cumulative_km += float(leg_km)
+                        if leg_duration is not None:
+                            cumulative_drive_min += float(leg_duration)
+
+                        sequence_rows.append(
+                            {
+                                "Etap": leg_no,
+                                "Başlangıç": codes[i],
+                                "Varış": codes[j],
+                                "OSM Yol km": round(float(leg_km), 1),
+                                "Sürüş dk": None if leg_duration is None else round(float(leg_duration)),
+                                "Kümülatif km": round(cumulative_km, 1),
+                            }
+                        )
+
+                    sequence_df = pd.DataFrame(sequence_rows)
+
+                    # Başlangıç noktası depo/ilk ATM kabul edilir; dönüş bacağı hizmet durağı sayılmaz.
+                    service_stop_count = max(0, len(order) - 1)
+                    total_service_minutes = service_stop_count * service_minutes_per_stop
+
+                    tour_costs = route_cost_breakdown(
+                        road_distance_km=cumulative_km,
+                        driving_minutes=cumulative_drive_min,
+                        road_cost_per_km=road_cost_per_km,
+                        hourly_worker_cost=hourly_worker_cost,
+                        crew_size=crew_size,
+                        service_minutes=total_service_minutes,
+                        fixed_stop_cost=fixed_stop_cost,
+                        service_stop_count=service_stop_count,
+                        include_road=include_route_road,
+                        include_labor=include_route_labor,
+                        include_fixed_stop=include_route_fixed,
+                    )
+
+                    route_seq_cols = st.columns([1.5, 1])
+
+                    with route_seq_cols[0]:
+                        st.dataframe(
+                            sequence_df,
+                            hide_index=True,
+                            width="stretch",
+                            height=295,
+                        )
+
+                    with route_seq_cols[1]:
+                        st.metric(
+                            "OSM Tur Uzunluğu",
+                            f"{cumulative_km:.1f} km".replace(".", ","),
+                        )
+                        st.metric("Toplam Sürüş Süresi", f"{cumulative_drive_min:.0f} dk")
+                        st.metric("Hizmet Durağı", f"{service_stop_count} ATM")
+                        st.metric(
+                            "Toplam Operasyon Süresi",
+                            f"{tour_costs['operation_minutes']:.0f} dk",
+                        )
+                        st.metric("Seçili Tur Maliyeti", fmt_tl(tour_costs["total_cost"]))
+
+                        st.caption(
+                            "Tur maliyeti: seçili yol/araç + işçilik + ATM sabit işlem kalemlerinin toplamıdır."
+                        )
 
 
 # =========================================================
@@ -3274,18 +4380,150 @@ elif page == "Rota Planlama":
 # =========================================================
 
 elif page == "Senaryolar":
-    f1, f2 = st.columns(2)
+    st.info(
+        "Her il ayrı operasyon ekibi olarak değerlendirilir. "
+        "Mesafeler OpenStreetMap/OSRM otomobil sürüş yollarından gelir. "
+        "Maliyet kalemleri aşağıda birbirinden bağımsız seçilip izlenebilir."
+    )
 
-    with f1:
+    top1, top2 = st.columns(2)
+
+    with top1:
         scenario_city = st.selectbox(
             "İl / Ekip",
             ["Tüm İller", "Trabzon", "Rize", "Ordu", "Giresun", "Artvin"],
+            key="scenario_city_osm",
         )
 
-    with f2:
+    with top2:
         objective = st.selectbox(
             "Optimizasyon Hedefi",
             ["Maliyet Minimum", "Mesafe Minimum", "Dengeli"],
+            key="scenario_objective_osm",
+        )
+
+    with st.expander("💰 Maliyet Türlerini Ayrı Yönet", expanded=True):
+        st.caption(
+            "Her maliyet kalemi ayrı tutulur. Yol / Araç İşletme her zaman aktiftir; "
+            "diğer kalemleri butonlardan açıp kapatabilirsin."
+        )
+
+        top_cost_1, top_cost_2, top_cost_3 = st.columns(3)
+
+        with top_cost_1:
+            st.markdown("**Yol / Araç İşletme**")
+            st.success("● Aktif")
+            scenario_road_cost = st.number_input(
+                "Yol / araç işletme (TL/km)",
+                min_value=1.0,
+                max_value=250.0,
+                value=22.0,
+                step=1.0,
+                key="scenario_road_cost",
+            )
+
+            include_labor = st.toggle(
+                "İşçilik maliyeti",
+                value=True,
+                key="scenario_include_labor",
+            )
+            scenario_hourly_worker = st.number_input(
+                "İşçilik (TL/saat/çalışan)",
+                min_value=0.0,
+                max_value=5000.0,
+                value=350.0,
+                step=25.0,
+                key="scenario_hourly_worker",
+            )
+
+        with top_cost_2:
+            include_accident = st.toggle(
+                "İş Kazası / İşgücü Kaybı",
+                value=False,
+                key="scenario_include_accident",
+            )
+            scenario_accident_cost = st.number_input(
+                "İş kazası / işgücü kaybı (TL/olay)",
+                min_value=0.0,
+                max_value=1000000.0,
+                value=0.0,
+                step=1000.0,
+                key="scenario_accident_cost",
+            )
+
+            include_training = st.toggle(
+                "Seminer / Konferans / Eğitim",
+                value=False,
+                key="scenario_include_training",
+            )
+            scenario_training_cost = st.number_input(
+                "Seminer / konferans / eğitim (TL/kişi)",
+                min_value=0.0,
+                max_value=100000.0,
+                value=0.0,
+                step=500.0,
+                key="scenario_training_cost",
+            )
+
+        with top_cost_3:
+            include_lodging = st.toggle(
+                "Konaklama / Harcırah",
+                value=False,
+                key="scenario_include_lodging",
+            )
+            scenario_lodging_cost = st.number_input(
+                "Konaklama / harcırah (TL/kişi-gün)",
+                min_value=0.0,
+                max_value=100000.0,
+                value=0.0,
+                step=500.0,
+                key="scenario_lodging_cost",
+            )
+
+            include_overtime = st.toggle(
+                "Fazla Mesai",
+                value=False,
+                key="scenario_include_overtime",
+            )
+            scenario_overtime_cost = st.number_input(
+                "Fazla mesai (TL/saat/çalışan)",
+                min_value=0.0,
+                max_value=5000.0,
+                value=0.0,
+                step=25.0,
+                key="scenario_overtime_cost",
+            )
+
+        st.divider()
+
+        p1, p2 = st.columns(2)
+
+        with p1:
+            scenario_crew_size = st.number_input(
+                "Araç başına çalışan",
+                min_value=1,
+                max_value=10,
+                value=2,
+                step=1,
+                key="scenario_crew_size",
+            )
+
+        with p2:
+            scenario_service_min = st.number_input(
+                "ATM hizmet süresi (dk)",
+                min_value=0,
+                max_value=120,
+                value=15,
+                step=5,
+                key="scenario_service_min",
+            )
+
+    with st.expander("📚 Maliyet Kategorileri", expanded=False):
+        st.dataframe(
+            COST_CATEGORY_CATALOG,
+            hide_index=True,
+            width="stretch",
+            height=250,
         )
 
     cities = (
@@ -3295,44 +4533,169 @@ elif page == "Senaryolar":
     )
 
     rows = []
+    baseline_notes = []
 
-    for city in cities:
-        base = CITY_ROUTE_BASE[city]
+    with st.spinner("İl ekipleri için OSM/OSRM sürüş bazları hazırlanıyor..."):
+        for city in cities:
+            osm_base = city_osrm_baseline(city)
 
-        for _, sc in SCENARIOS.iterrows():
-            distance = base["km"] * sc["Mesafe Çarpanı"]
-            cost = base["cost"] * sc["Maliyet Çarpanı"]
-
-            vehicles = max(
-                1,
-                int(base["vehicles"] + sc["Araç Farkı"]),
-            )
-
-            if objective == "Maliyet Minimum":
-                score = cost
-            elif objective == "Mesafe Minimum":
-                score = distance
+            if osm_base is not None and osm_base["distance_km"] > 0:
+                base_distance = osm_base["distance_km"]
+                base_duration = osm_base["duration_min"]
+                stop_count = osm_base["stop_count"]
+                source = "OSM/OSRM"
             else:
-                score = (
-                    (cost / base["cost"]) * .50
-                    + (distance / base["km"]) * .30
-                    + (sc["Risk"] / 100) * .20
+                # OSRM geçici olarak erişilemezse daha önce tanımlı
+                # temsili KARAYOLU operasyon değerleri kullanılır.
+                fallback = CITY_ROUTE_BASE[city]
+                base_distance = float(fallback["km"])
+                base_duration = base_distance / 48 * 60
+                stop_count = len(ATM[ATM["İl"] == city])
+                source = "Temsili karayolu yedeği"
+
+                baseline_notes.append(
+                    f"{city}: OSM servisi alınamadığı için temsili karayolu baz değeri kullanıldı."
                 )
 
-            rows.append(
-                {
-                    "İl": city,
-                    "Senaryo": sc["Senaryo"],
-                    "Araç": vehicles,
-                    "Toplam Mesafe": round(distance),
-                    "Toplam Maliyet": round(cost),
-                    "Hizmet Seviyesi": int(sc["Hizmet Seviyesi"]),
-                    "Risk": int(sc["Risk"]),
-                    "_score": score,
-                }
-            )
+            base_vehicle_count = CITY_ROUTE_BASE[city]["vehicles"]
+
+            for _, sc in SCENARIOS.iterrows():
+                scenario_name = sc["Senaryo"]
+
+                # Senaryo çarpanı OSM sürüş baz mesafesi üzerinde uygulanır.
+                # Bu çarpan daha sık/seyrek ikmal, ek ziyaret ve servis
+                # yoğunluğunu temsil eden prototip varsayımıdır.
+                distance_factor = float(sc["Mesafe Çarpanı"])
+
+                distance = base_distance * distance_factor
+                drive_minutes = base_duration * distance_factor
+
+                vehicles = max(
+                    1,
+                    int(base_vehicle_count + sc["Araç Farkı"]),
+                )
+
+                # Hizmet süresi tüm temsili ATM durakları için eklenir.
+                service_minutes = (
+                    stop_count
+                    * scenario_service_min
+                )
+
+                operation_hours = (
+                    drive_minutes
+                    + service_minutes
+                ) / 60.0
+
+                road_cost = (
+                    distance
+                    * scenario_road_cost
+                )
+
+                labor_cost = (
+                    operation_hours
+                    * scenario_crew_size
+                    * scenario_hourly_worker
+                    if include_labor
+                    else 0.0
+                )
+
+                accident_cost = (
+                    scenario_accident_cost
+                    * (float(sc["Risk"]) / 100.0)
+                    if include_accident
+                    else 0.0
+                )
+
+                training_cost = (
+                    scenario_training_cost
+                    * scenario_crew_size
+                    if include_training
+                    else 0.0
+                )
+
+                lodging_cost = (
+                    scenario_lodging_cost
+                    * scenario_crew_size
+                    if include_lodging
+                    else 0.0
+                )
+
+                overtime_hours = max(
+                    0.0,
+                    operation_hours - 8.0,
+                )
+
+                overtime_cost = (
+                    overtime_hours
+                    * scenario_crew_size
+                    * scenario_overtime_cost
+                    if include_overtime
+                    else 0.0
+                )
+
+                total_cost = (
+                    road_cost
+                    + labor_cost
+                    + accident_cost
+                    + training_cost
+                    + lodging_cost
+                    + overtime_cost
+                )
+
+                if objective == "Maliyet Minimum":
+                    score = total_cost
+
+                elif objective == "Mesafe Minimum":
+                    score = distance
+
+                else:
+                    # Dengeli hedef:
+                    # %50 normalize maliyet + %30 normalize mesafe
+                    # + %20 operasyonel risk
+                    normalized_cost = (
+                        total_cost
+                        / max(1, base_distance * scenario_road_cost)
+                    )
+
+                    normalized_distance = (
+                        distance
+                        / max(1, base_distance)
+                    )
+
+                    score = (
+                        normalized_cost * .50
+                        + normalized_distance * .30
+                        + (float(sc["Risk"]) / 100) * .20
+                    )
+
+                rows.append(
+                    {
+                        "İl": city,
+                        "Senaryo": scenario_name,
+                        "Araç": vehicles,
+                        "Baz Kaynak": source,
+                        "OSM Baz km": round(base_distance, 1),
+                        "Toplam Mesafe": round(distance, 1),
+                        "Sürüş Süresi dk": round(drive_minutes),
+                        "Yol Maliyeti": round(road_cost),
+                        "İşçilik Maliyeti": round(labor_cost),
+                        "İş Kazası / İşgücü Kaybı": round(accident_cost),
+                        "Seminer / Konferans / Eğitim": round(training_cost),
+                        "Konaklama / Harcırah": round(lodging_cost),
+                        "Fazla Mesai": round(overtime_cost),
+                        "Toplam Maliyet": round(total_cost),
+                        "Hizmet Seviyesi": int(sc["Hizmet Seviyesi"]),
+                        "Risk": int(sc["Risk"]),
+                        "_score": float(score),
+                    }
+                )
 
     scenario_result = pd.DataFrame(rows)
+
+    if baseline_notes:
+        with st.expander("OSM bağlantı notları", expanded=False):
+            for note in baseline_notes:
+                st.warning(note)
 
     best_rows = []
 
@@ -3353,20 +4716,29 @@ elif page == "Senaryolar":
             with st.container(border=True):
                 st.markdown(f"### {row['İl']}")
                 st.markdown(f"**{row['Senaryo']}**")
+
                 st.caption(
-                    f"{row['Toplam Mesafe']} km · "
-                    f"{fmt_tl(row['Toplam Maliyet'])}\n\n"
-                    f"{row['Araç']} araç · "
-                    f"%{row['Hizmet Seviyesi']} hizmet"
+                    f"{row['Toplam Mesafe']:.1f} km OSM bazlı\n\n"
+                    f"Yol: {fmt_tl(row['Yol Maliyeti'])}\n\n"
+                    f"İşçilik: {fmt_tl(row['İşçilik Maliyeti'])}\n\n"
+                    f"Toplam: {fmt_tl(row['Toplam Maliyet'])}"
+                )
+
+                st.caption(
+                    f"{int(row['Araç'])} araç · "
+                    f"%{int(row['Hizmet Seviyesi'])} hizmet"
                 )
 
     st.write("")
 
-    left, right = st.columns([1.45, 1])
+    left, right = st.columns([1.5, 1])
 
     with left:
         with st.container(border=True):
             st.subheader("Senaryo Karşılaştırması")
+            st.caption(
+                "Toplam maliyet yol ve işçilik kalemlerine ayrılmıştır."
+            )
 
             table_show = scenario_result.copy()
             table_show["Karar"] = ""
@@ -3376,16 +4748,21 @@ elif page == "Senaryolar":
                     (table_show["İl"] == row["İl"])
                     & (table_show["Senaryo"] == row["Senaryo"])
                 )
+
                 table_show.loc[mask, "Karar"] = "Önerilen"
 
-            table_show["Maliyet"] = (
-                table_show["Toplam Maliyet"].apply(fmt_tl)
+            table_show["Mesafe"] = (
+                table_show["Toplam Mesafe"]
+                .map(lambda x: f"{x:.1f} km".replace(".", ","))
             )
 
-            table_show["Mesafe"] = (
-                table_show["Toplam Mesafe"].astype(str)
-                + " km"
-            )
+            table_show["Yol"] = table_show["Yol Maliyeti"].apply(fmt_tl)
+            table_show["İşçilik"] = table_show["İşçilik Maliyeti"].apply(fmt_tl)
+            table_show["İş Kazası"] = table_show["İş Kazası / İşgücü Kaybı"].apply(fmt_tl)
+            table_show["Eğitim"] = table_show["Seminer / Konferans / Eğitim"].apply(fmt_tl)
+            table_show["Konaklama"] = table_show["Konaklama / Harcırah"].apply(fmt_tl)
+            table_show["Fazla Mesai"] = table_show["Fazla Mesai"].apply(fmt_tl)
+            table_show["Toplam"] = table_show["Toplam Maliyet"].apply(fmt_tl)
 
             table_show["Hizmet"] = (
                 "%"
@@ -3402,9 +4779,16 @@ elif page == "Senaryolar":
                     [
                         "İl",
                         "Senaryo",
+                        "Baz Kaynak",
                         "Araç",
                         "Mesafe",
-                        "Maliyet",
+                        "Yol",
+                        "İşçilik",
+                        "İş Kazası",
+                        "Eğitim",
+                        "Konaklama",
+                        "Fazla Mesai",
+                        "Toplam",
                         "Hizmet",
                         "Risk %",
                         "Karar",
@@ -3412,7 +4796,7 @@ elif page == "Senaryolar":
                 ],
                 hide_index=True,
                 width="stretch",
-                height=440,
+                height=460,
             )
 
     with right:
@@ -3420,59 +4804,95 @@ elif page == "Senaryolar":
             chart_city = st.selectbox(
                 "Grafikte gösterilecek il",
                 cities,
+                key="scenario_chart_city_osm",
             )
 
             chart_df = scenario_result[
                 scenario_result["İl"] == chart_city
             ].copy()
 
-            chart_df["Maliyet (Bin TL)"] = (
-                chart_df["Toplam Maliyet"] / 1000
-            )
+            cost_fig = go.Figure()
 
-            chart_df["Mesafe (100 km)"] = (
-                chart_df["Toplam Mesafe"] / 100
-            )
-
-            fig = go.Figure()
-
-            fig.add_trace(
+            cost_fig.add_trace(
                 go.Bar(
                     x=chart_df["Senaryo"],
-                    y=chart_df["Maliyet (Bin TL)"],
-                    name="Maliyet (Bin TL)",
+                    y=chart_df["Yol Maliyeti"],
+                    name="Yol Maliyeti",
                     marker_color="#4d9cff",
                 )
             )
 
-            fig.add_trace(
+            cost_fig.add_trace(
                 go.Bar(
                     x=chart_df["Senaryo"],
-                    y=chart_df["Mesafe (100 km)"],
-                    name="Mesafe (100 km)",
+                    y=chart_df["İşçilik Maliyeti"],
+                    name="İşçilik Maliyeti",
                     marker_color="#ffbf00",
                 )
             )
 
-            fig.update_layout(
-                barmode="group",
-                height=400,
+            if include_accident:
+                cost_fig.add_trace(
+                    go.Bar(
+                        x=chart_df["Senaryo"],
+                        y=chart_df["İş Kazası / İşgücü Kaybı"],
+                        name="İş Kazası / İşgücü Kaybı",
+                        marker_color="#ff6b6b",
+                    )
+                )
+
+            if include_training:
+                cost_fig.add_trace(
+                    go.Bar(
+                        x=chart_df["Senaryo"],
+                        y=chart_df["Seminer / Konferans / Eğitim"],
+                        name="Seminer / Konferans / Eğitim",
+                        marker_color="#7cdbb5",
+                    )
+                )
+
+            if include_lodging:
+                cost_fig.add_trace(
+                    go.Bar(
+                        x=chart_df["Senaryo"],
+                        y=chart_df["Konaklama / Harcırah"],
+                        name="Konaklama / Harcırah",
+                        marker_color="#b29cff",
+                    )
+                )
+
+            if include_overtime:
+                cost_fig.add_trace(
+                    go.Bar(
+                        x=chart_df["Senaryo"],
+                        y=chart_df["Fazla Mesai"],
+                        name="Fazla Mesai",
+                        marker_color="#f09a54",
+                    )
+                )
+
+            cost_fig.update_layout(
+                barmode="stack",
+                height=405,
+                margin=dict(l=10, r=10, t=10, b=10),
                 paper_bgcolor="#0f1d2a",
                 plot_bgcolor="#0f1d2a",
-                font=dict(color="white"),
-                xaxis=dict(showgrid=False, type="category"),
+                font=dict(color="#dbe4ec"),
+                xaxis=dict(
+                    title="Senaryo",
+                    showgrid=False,
+                    type="category",
+                ),
                 yaxis=dict(
-                    gridcolor="rgba(255,255,255,.06)"
+                    title="Maliyet (TL)",
+                    gridcolor="rgba(255,255,255,.06)",
                 ),
             )
 
-            safe_plotly_chart(
-                fig
-            )
-
+            safe_plotly_chart(cost_fig)
 
     # -----------------------------------------------------
-    # SENARYO - İL BAZLI TOPLAM PORTFÖY ÖZETİ
+    # İL EKİPLERİ TOPLAM PORTFÖYÜ
     # -----------------------------------------------------
 
     st.write("")
@@ -3481,14 +4901,21 @@ elif page == "Senaryolar":
         st.subheader("İl Ekipleri İçin Önerilen Operasyon Portföyü")
 
         portfolio_rows = []
+
         for best in best_rows:
             portfolio_rows.append(
                 {
                     "İl": best["İl"],
                     "Önerilen Senaryo": best["Senaryo"],
                     "Araç": int(best["Araç"]),
-                    "Mesafe km": int(best["Toplam Mesafe"]),
-                    "Maliyet": int(best["Toplam Maliyet"]),
+                    "OSM / Yol km": round(float(best["Toplam Mesafe"]), 1),
+                    "Yol Maliyeti": int(best["Yol Maliyeti"]),
+                    "İşçilik Maliyeti": int(best["İşçilik Maliyeti"]),
+                    "İş Kazası / İşgücü Kaybı": int(best["İş Kazası / İşgücü Kaybı"]),
+                    "Seminer / Konferans / Eğitim": int(best["Seminer / Konferans / Eğitim"]),
+                    "Konaklama / Harcırah": int(best["Konaklama / Harcırah"]),
+                    "Fazla Mesai": int(best["Fazla Mesai"]),
+                    "Toplam Maliyet": int(best["Toplam Maliyet"]),
                     "Hizmet %": int(best["Hizmet Seviyesi"]),
                     "Risk %": int(best["Risk"]),
                 }
@@ -3496,39 +4923,56 @@ elif page == "Senaryolar":
 
         portfolio = pd.DataFrame(portfolio_rows)
 
-        p1, p2, p3, p4 = st.columns(4)
-        metric_card(p1, 
+        p1, p2, p3, p4, p5 = st.columns(5)
+
+        p1.metric(
             "Toplam Araç",
             int(portfolio["Araç"].sum()),
         )
-        metric_card(p2, 
-            "Toplam Mesafe",
-            f"{int(portfolio['Mesafe km'].sum())} km",
+
+        p2.metric(
+            "Toplam OSM Yol",
+            f"{portfolio['OSM / Yol km'].sum():.1f} km".replace(".", ","),
         )
-        metric_card(p3, 
-            "Toplam Maliyet",
-            fmt_tl(portfolio["Maliyet"].sum()),
+
+        p3.metric(
+            "Toplam Yol Maliyeti",
+            fmt_tl(portfolio["Yol Maliyeti"].sum()),
         )
-        metric_card(p4, 
-            "Ortalama Hizmet",
-            f"%{portfolio['Hizmet %'].mean():.1f}".replace(".", ","),
+
+        p4.metric(
+            "Toplam İşçilik",
+            fmt_tl(portfolio["İşçilik Maliyeti"].sum()),
+        )
+
+        p5.metric(
+            "Toplam Operasyon Maliyeti",
+            fmt_tl(portfolio["Toplam Maliyet"].sum()),
         )
 
         portfolio["Maliyet / km"] = (
-            portfolio["Maliyet"]
-            / portfolio["Mesafe km"]
+            portfolio["Toplam Maliyet"]
+            / portfolio["OSM / Yol km"].replace(0, np.nan)
         ).round(1)
 
         st.dataframe(
             portfolio,
             hide_index=True,
+            width="stretch",
             height=245,
         )
+
+    # -----------------------------------------------------
+    # PARETO: TOPLAM MALİYET - OSM MESAFE
+    # -----------------------------------------------------
 
     st.write("")
 
     with st.container(border=True):
-        st.subheader("Pareto Görünümü: Maliyet – Mesafe")
+        st.subheader("Pareto Görünümü: Toplam Maliyet – OSM Yol Mesafesi")
+        st.caption(
+            "Sol-alt bölge daha iyidir: daha düşük sürüş mesafesi ve daha düşük toplam maliyet."
+        )
 
         pareto_fig = px.scatter(
             scenario_result,
@@ -3537,12 +4981,18 @@ elif page == "Senaryolar":
             color="İl",
             symbol="Senaryo",
             hover_data=[
+                "Yol Maliyeti",
+                "İşçilik Maliyeti",
                 "Araç",
                 "Hizmet Seviyesi",
                 "Risk",
             ],
         )
-        pareto_fig.update_traces(marker=dict(size=11))
+
+        pareto_fig.update_traces(
+            marker=dict(size=11)
+        )
+
         pareto_fig.update_layout(
             height=390,
             margin=dict(l=10, r=10, t=10, b=10),
@@ -3550,7 +5000,7 @@ elif page == "Senaryolar":
             plot_bgcolor="#0f1d2a",
             font=dict(color="#dbe4ec"),
             xaxis=dict(
-                title="Toplam Mesafe (km)",
+                title="OSM Bazlı Toplam Yol Mesafesi (km)",
                 gridcolor="rgba(255,255,255,.05)",
             ),
             yaxis=dict(
@@ -3558,43 +5008,163 @@ elif page == "Senaryolar":
                 gridcolor="rgba(255,255,255,.05)",
             ),
         )
-        safe_plotly_chart(
-            pareto_fig
-        )
 
+        safe_plotly_chart(pareto_fig)
+
+    # -----------------------------------------------------
+    # ARAÇ SAYISI DUYARLILIK ANALİZİ
+    # -----------------------------------------------------
 
     st.write("")
 
     with st.container(border=True):
         st.subheader("Araç Sayısı Duyarlılık Analizi")
+        st.caption(
+            "Bu analizde toplam maliyet yine yalnızca yol ve işçilik kalemlerinden oluşur."
+        )
 
         sensitivity_city = st.selectbox(
             "Duyarlılık için il",
             cities,
-            key="scenario_sensitivity_city",
+            key="scenario_sensitivity_city_osm",
         )
-        base = CITY_ROUTE_BASE[sensitivity_city]
+
+        osm_base = city_osrm_baseline(
+            sensitivity_city
+        )
+
+        if osm_base is not None and osm_base["distance_km"] > 0:
+            sensitivity_base_km = osm_base["distance_km"]
+            sensitivity_base_min = osm_base["duration_min"]
+            sensitivity_stops = osm_base["stop_count"]
+            sensitivity_source = "OSM/OSRM"
+
+        else:
+            fallback = CITY_ROUTE_BASE[
+                sensitivity_city
+            ]
+
+            sensitivity_base_km = float(
+                fallback["km"]
+            )
+
+            sensitivity_base_min = (
+                sensitivity_base_km
+                / 48
+                * 60
+            )
+
+            sensitivity_stops = len(
+                ATM[
+                    ATM["İl"]
+                    == sensitivity_city
+                ]
+            )
+
+            sensitivity_source = "Temsili karayolu yedeği"
 
         vehicle_rows = []
+
         for vehicle in range(2, 9):
-            congestion_factor = max(0.78, 1.18 - vehicle * 0.055)
-            distance = base["km"] * congestion_factor
-            variable_cost = distance * 19.5
-            fixed_vehicle_cost = vehicle * 620
-            service = min(99, 78 + vehicle * 3.1)
-            shortage_penalty = max(0, 95 - service) * 150
-            total = variable_cost + fixed_vehicle_cost + shortage_penalty
+            # Daha fazla araç paralel çalışma ile ekip başı çevrim süresini azaltabilir;
+            # ancak toplam yol ağında tekrarlı hareket yaratabileceği için küçük bir
+            # mesafe artış katsayısı kullanılır.
+            distance_factor = (
+                0.94
+                + max(0, vehicle - 4) * 0.025
+            )
+
+            distance = (
+                sensitivity_base_km
+                * distance_factor
+            )
+
+            # Paralellik nedeniyle tamamlanma süresi azalır.
+            parallel_factor = max(
+                0.42,
+                1.00 - (vehicle - 2) * 0.075,
+            )
+
+            drive_minutes = (
+                sensitivity_base_min
+                * parallel_factor
+            )
+
+            service_minutes = (
+                sensitivity_stops
+                * scenario_service_min
+                * parallel_factor
+            )
+
+            sensitivity_hours = (
+                drive_minutes
+                + service_minutes
+            ) / 60.0
+
+            sensitivity_road_cost = (
+                distance
+                * scenario_road_cost
+            )
+
+            sensitivity_labor_cost = (
+                sensitivity_hours
+                * scenario_crew_size
+                * scenario_hourly_worker
+                if include_labor
+                else 0.0
+            )
+
+            sensitivity_other_cost = (
+                (
+                    scenario_accident_cost * 0.10
+                    if include_accident
+                    else 0.0
+                )
+                + (
+                    scenario_training_cost * scenario_crew_size
+                    if include_training
+                    else 0.0
+                )
+                + (
+                    scenario_lodging_cost * scenario_crew_size
+                    if include_lodging
+                    else 0.0
+                )
+                + (
+                    max(0.0, sensitivity_hours - 8.0)
+                    * scenario_crew_size
+                    * scenario_overtime_cost
+                    if include_overtime
+                    else 0.0
+                )
+            )
+
+            sensitivity_total_cost = (
+                sensitivity_road_cost
+                + sensitivity_labor_cost
+                + sensitivity_other_cost
+            )
+
+            service = min(
+                99,
+                80 + vehicle * 2.6,
+            )
 
             vehicle_rows.append(
                 {
                     "Araç": vehicle,
-                    "Mesafe": round(distance),
+                    "Kaynak": sensitivity_source,
+                    "OSM / Yol km": round(distance, 1),
                     "Hizmet %": round(service, 1),
-                    "Toplam Maliyet": round(total),
+                    "Yol Maliyeti": round(sensitivity_road_cost),
+                    "İşçilik Maliyeti": round(sensitivity_labor_cost),
+                    "Diğer Seçili Maliyetler": round(sensitivity_other_cost),
+                    "Toplam Maliyet": round(sensitivity_total_cost),
                 }
             )
 
         vehicle_sensitivity = pd.DataFrame(vehicle_rows)
+
         min_cost_row = vehicle_sensitivity.loc[
             vehicle_sensitivity["Toplam Maliyet"].idxmin()
         ]
@@ -3603,15 +5173,20 @@ elif page == "Senaryolar":
 
         with sens_left:
             fleet_fig = go.Figure()
+
             fleet_fig.add_trace(
                 go.Scatter(
                     x=vehicle_sensitivity["Araç"],
                     y=vehicle_sensitivity["Toplam Maliyet"],
                     mode="lines+markers",
                     name="Toplam Maliyet",
-                    line=dict(color="#4d9cff", width=3),
+                    line=dict(
+                        color="#4d9cff",
+                        width=3,
+                    ),
                 )
             )
+
             fleet_fig.add_trace(
                 go.Scatter(
                     x=[min_cost_row["Araç"]],
@@ -3619,46 +5194,77 @@ elif page == "Senaryolar":
                     mode="markers+text",
                     text=["Minimum"],
                     textposition="top center",
-                    marker=dict(color="#ffbf00", size=12),
+                    marker=dict(
+                        color="#ffbf00",
+                        size=13,
+                    ),
                     name="Minimum",
                 )
             )
+
             fleet_fig.update_layout(
-                height=340,
-                margin=dict(l=10, r=10, t=20, b=10),
+                height=350,
+                margin=dict(l=10, r=10, t=10, b=10),
                 paper_bgcolor="#0f1d2a",
                 plot_bgcolor="#0f1d2a",
                 font=dict(color="#dbe4ec"),
-                xaxis=dict(title="Araç Sayısı", showgrid=False),
+                xaxis=dict(
+                    title="Araç Sayısı",
+                    dtick=1,
+                    gridcolor="rgba(255,255,255,.05)",
+                ),
                 yaxis=dict(
                     title="Toplam Maliyet (TL)",
                     gridcolor="rgba(255,255,255,.05)",
                 ),
-                showlegend=False,
-            )
-            safe_plotly_chart(
-                fleet_fig
             )
 
+            safe_plotly_chart(fleet_fig)
+
         with sens_right:
-            metric_card(st, 
+            st.metric(
                 "Minimum Maliyetli Araç Sayısı",
                 int(min_cost_row["Araç"]),
             )
-            metric_card(st, 
-                "Minimum Tahmini Maliyet",
-                fmt_tl(min_cost_row["Toplam Maliyet"]),
-            )
-            metric_card(st, 
-                "Bu Noktadaki Hizmet Seviyesi",
-                f"%{min_cost_row['Hizmet %']:.1f}".replace(".", ","),
+
+            st.metric(
+                "Minimum Toplam Maliyet",
+                fmt_tl(
+                    min_cost_row[
+                        "Toplam Maliyet"
+                    ]
+                ),
             )
 
-            st.dataframe(
-                vehicle_sensitivity,
-                hide_index=True,
-                height=205,
+            st.metric(
+                "Bu Noktadaki Yol Maliyeti",
+                fmt_tl(
+                    min_cost_row[
+                        "Yol Maliyeti"
+                    ]
+                ),
             )
+
+            st.metric(
+                "Bu Noktadaki İşçilik",
+                fmt_tl(
+                    min_cost_row[
+                        "İşçilik Maliyeti"
+                    ]
+                ),
+            )
+
+            st.caption(
+                f"Baz rota kaynağı: {sensitivity_source}. "
+                "Araç sayısı arttıkça süre ve maliyet arasındaki denge karşılaştırılır."
+            )
+
+        st.dataframe(
+            vehicle_sensitivity,
+            hide_index=True,
+            width="stretch",
+            height=265,
+        )
 
 
 # =========================================================
@@ -3698,10 +5304,10 @@ elif page == "Raporlar":
 
     r1, r2, r3, r4 = st.columns(4)
 
-    metric_card(r1, "ATM Sayısı", report_summary["atm"])
-    metric_card(r2, "Kritik ATM", report_summary["critical"])
-    metric_card(r3, "Tahmini Talep", fmt_m(report_summary["demand"]))
-    metric_card(r4, "Rota Verimliliği", f"%{report_summary['eff']}")
+    r1.metric("ATM Sayısı", report_summary["atm"])
+    r2.metric("Kritik ATM", report_summary["critical"])
+    r3.metric("Tahmini Talep", fmt_m(report_summary["demand"]))
+    r4.metric("Rota Verimliliği", f"%{report_summary['eff']}")
 
     st.write("")
 
@@ -3897,6 +5503,7 @@ st.divider()
 
 st.caption(
     "⚠️ Bu karar destek sistemi bitirme projesi prototipidir. "
-    "ATM, nakit, maliyet, rota ve talep verileri temsilidir; "
-    "gerçek VakıfBank operasyon verisi kullanılmamaktadır."
+    "ATM, nakit, maliyet ve talep verileri temsilidir; "
+    "rota mesafe/süre hesaplarında OpenStreetMap/OSRM kullanılmaktadır. "
+    "Gerçek VakıfBank operasyon verisi kullanılmamaktadır."
 )
